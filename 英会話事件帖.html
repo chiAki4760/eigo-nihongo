@@ -1,0 +1,1661 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>英会話事件帖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Shippori+Mincho+B1:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 夜の読書灯。暗い藍の地に、本ごとの灯りの色をひとつだけ灯す */
+:root{
+  color-scheme:dark;
+  --night:#0F141D; --panel:#161D29; --panel2:#1C2533; --line:#2A3446;
+  --text:#E6E0D2; --dim:#99A2B3;
+  --lamp:#E2A94B; --lamp-ink:#1A1206; --lamp-soft:rgba(226,169,75,.14);
+  --paper:#E9E3D4; --paper-ink:#1E1A14; --paper-rule:rgba(30,26,20,.09);
+  --ok:#7CC6A1; --ok-bg:rgba(124,198,161,.13);
+  --near:#E3C46C; --near-bg:rgba(227,196,108,.13);
+  --bad:#E8826F; --bad-bg:rgba(232,130,111,.14);
+  --mincho:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --ui:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  --en:"Libre Caslon Text",Georgia,"Times New Roman",serif;
+  --r:3px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--night);color:var(--text);font-family:var(--ui);font-size:16px;line-height:1.65}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:18px 16px 64px;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.wrap > *, .card > *, .stack > *{min-width:0}
+
+/* 見出し・本棚 */
+.hd{display:grid;gap:10px}
+.shelf{display:flex;gap:8px}
+.shelf select{flex:1 1 auto;width:0;min-width:0;font:inherit;font-size:.9rem;padding:7px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);color:var(--text);text-overflow:ellipsis}
+.hd h1{margin:0;font-family:var(--mincho);font-weight:700;font-size:1.4rem;letter-spacing:.06em;line-height:1.3;text-wrap:balance}
+/* レベルのしおり：題名の横に下がる栞。選んだ栞が長く垂れる */
+.title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.title-row h1{flex:1 1 auto;min-width:0;padding-top:4px}
+.ribbons{display:flex;gap:4px;flex:0 0 auto;margin-top:-2px}
+.ribbon{writing-mode:vertical-rl;width:26px;padding:8px 0 16px;font-family:var(--mincho);font-weight:700;font-size:.78rem;letter-spacing:.12em;background:var(--panel2);color:var(--dim);clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 8px),0 100%);transition:padding-bottom .18s ease,background-color .18s,color .18s}
+.ribbon:hover{color:var(--text)}
+.ribbon[aria-pressed="true"]{background:var(--lamp);color:var(--lamp-ink);padding-bottom:28px}
+@media (prefers-reduced-motion:reduce){.ribbon{transition:none}}
+.level-note{margin:0;font-size:.78rem;color:var(--dim)}
+.audio-toggle{margin-left:auto;font-size:.76rem;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.audio-toggle[aria-pressed="true"]{color:var(--lamp);border-color:var(--lamp)}
+.hd .sub{margin:0;font-size:.8rem;color:var(--dim)}
+.hd .src{margin:0;font-size:.76rem;color:var(--dim);border-left:2px solid var(--line);padding-left:8px}
+.chapters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chapters::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:6px 12px;border:1px solid var(--line);border-radius:var(--r);font-family:var(--mincho);font-size:.92rem;color:var(--dim);background:var(--panel);white-space:nowrap}
+.chip.done{color:var(--text)}
+.chip.done::after{content:" 済";font-family:var(--ui);font-size:.72rem;color:var(--ok)}
+.chip.cur{border-color:var(--lamp);color:var(--lamp);background:var(--lamp-soft)}
+.chip.book{margin-left:auto;font-family:var(--ui)}
+.chip.ui{font-family:var(--ui)}
+
+/* 本のページ（縦書き） */
+.page{
+  background:var(--paper);color:var(--paper-ink);border-radius:2px;
+  padding:22px 20px;max-height:22em;overflow-x:auto;overflow-y:hidden;
+  writing-mode:vertical-rl;font-family:var(--mincho);font-size:1.05rem;line-height:2.05;letter-spacing:.06em;
+  background-image:repeating-linear-gradient(to left, transparent 0, transparent calc(2.05em - 1px), var(--paper-rule) calc(2.05em - 1px), var(--paper-rule) 2.05em);
+  background-position:right 20px top 0;
+  box-shadow:0 18px 40px rgba(0,0,0,.45)
+}
+.page p{margin:0 0 0 1.2em}
+.page .ch-title{font-weight:700;font-size:1.25rem;margin-left:1.6em;letter-spacing:.2em}
+.scroll-hint{font-size:.76rem;color:var(--dim);text-align:right;margin:-10px 0 0}
+
+/* 会話 */
+.log{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.say{display:grid;gap:4px;padding:12px 14px;border-left:2px solid var(--line);background:var(--panel)}
+.say.me{border-left-color:var(--lamp);background:var(--panel2)}
+.who{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--dim)}
+.who b{font-family:var(--mincho);font-weight:700;font-size:.95rem;color:var(--text)}
+.say.me .who b{color:var(--lamp)}
+.line-en{margin:0;font-family:var(--en);font-size:1.12rem;line-height:1.6;overflow-wrap:anywhere}
+.line-ja{margin:0;font-family:var(--mincho);font-size:.95rem;color:var(--dim)}
+.tiny{font-size:.78rem;color:var(--dim);text-decoration:underline;text-underline-offset:3px;padding:2px}
+.tiny:hover{color:var(--text)}
+.say .acts{display:flex;gap:10px;margin-top:2px}
+
+/* 練習カード */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px;display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.card-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-hd h2{margin:0;font-family:var(--mincho);font-size:1rem;font-weight:700;color:var(--lamp);letter-spacing:.08em}
+.count{font-size:.8rem;color:var(--dim);font-variant-numeric:tabular-nums}
+.meter{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.meter span{display:block;height:100%;background:var(--lamp);transition:width .25s}
+.qtext{margin:0;font-family:var(--mincho);font-size:1.3rem;font-weight:500;line-height:1.7;overflow-wrap:anywhere}
+.qtext .full{display:inline-block;font-family:var(--ui);font-size:.72rem;font-weight:700;padding:0 6px;margin-right:8px;vertical-align:middle;background:var(--lamp);color:var(--lamp-ink);border-radius:2px}
+
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.modes button{padding:8px 4px;font-size:.86rem;color:var(--dim);border-left:1px solid var(--line)}
+.modes button:first-child{border-left:0}
+.modes button[aria-pressed="true"]{background:var(--lamp-soft);color:var(--lamp);font-weight:700}
+
+textarea, input.text{display:block;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--night);color:var(--text);font:inherit}
+textarea{min-height:84px;font-family:var(--en);font-size:1.1rem;line-height:1.55;resize:vertical}
+textarea:focus, input.text:focus{outline:2px solid var(--lamp);outline-offset:-1px;border-color:transparent}
+textarea.ja{font-family:var(--ui);font-size:.95rem}
+.microw{display:grid;justify-items:center;gap:6px}
+.mic{position:relative;width:64px;height:64px;border-radius:50%;background:var(--lamp);color:var(--lamp-ink);display:grid;place-items:center}
+.mic.on{background:var(--bad);color:#1a0d0a}
+.mic.on::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--bad);animation:ring 1.2s ease-out infinite}
+@keyframes ring{from{transform:scale(.92);opacity:.9}to{transform:scale(1.25);opacity:0}}
+@media (prefers-reduced-motion:reduce){.mic.on::after{animation:none}.meter span{transition:none}}
+.miclabel{margin:0;font-size:.8rem;color:var(--dim);text-align:center}
+
+/* 並べ替え */
+.tiles-ans{min-height:56px;padding:8px;border:1px dashed var(--line);border-radius:var(--r);display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;background:var(--night)}
+.tiles-ans:empty::before{content:"下のかたまりを、正しい順にタップ";font-size:.82rem;color:var(--dim);padding:6px 4px}
+.tiles-pool{display:flex;flex-wrap:wrap;gap:6px}
+.tile{padding:7px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);font-family:var(--en);font-size:1.02rem}
+.tile:hover{border-color:var(--lamp)}
+.tiles-ans .tile{border-color:var(--lamp);color:var(--lamp)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);font-size:.92rem;white-space:nowrap}
+.btn:hover{border-color:var(--dim)}
+.btn.primary{width:100%;padding:12px 16px;background:var(--lamp);border-color:var(--lamp);color:var(--lamp-ink);font-weight:700;font-size:1rem}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pair .btn{white-space:normal}
+.note{margin:0;min-height:1.3em;font-size:.85rem;color:var(--dim)}
+.note.err{color:var(--bad)}
+.stack{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+
+.badge{justify-self:start;padding:2px 10px;border-radius:2px;font-weight:700;font-size:.9rem}
+.b-correct{background:var(--ok-bg);color:var(--ok)}
+.b-close{background:var(--near-bg);color:var(--near)}
+.b-wrong{background:var(--bad-bg);color:var(--bad)}
+.b-skipped{background:var(--panel2);color:var(--dim)}
+.cmp{display:grid;gap:8px}
+.cmprow{background:var(--night);border-radius:var(--r);padding:9px 12px}
+.cl{display:block;font-size:.74rem;color:var(--dim)}
+.en{margin:0;font-family:var(--en);font-size:1.05rem;line-height:1.6;overflow-wrap:anywhere}
+.w-miss{background:var(--bad-bg);color:var(--bad);border-radius:2px;padding:0 3px}
+.w-extra{color:var(--bad);text-decoration:line-through}
+
+.endcard h3, .form h2{margin:0;font-family:var(--mincho);font-size:1.05rem;color:var(--lamp)}
+.endcard p, .form p{margin:0;font-size:.88rem;color:var(--dim)}
+.form label{display:grid;gap:4px;font-size:.84rem;font-weight:500}
+.form label span{font-weight:400;color:var(--dim)}
+
+/* セリフ帳 */
+.book{display:grid;gap:16px}
+.book h2{margin:0;font-family:var(--mincho);font-size:1.2rem;letter-spacing:.1em}
+.book h3{margin:0 0 6px;font-family:var(--mincho);font-size:1rem;color:var(--lamp)}
+.book ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.book li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:start;padding:8px 10px;background:var(--panel);border-radius:var(--r)}
+.book li .line-ja{grid-column:1}
+.book li .tiny{grid-row:1;grid-column:2}
+.empty{font-size:.9rem;color:var(--dim)}
+.copybox{display:grid;gap:6px}
+.copybox textarea{font-family:var(--ui);font-size:.85rem;min-height:120px}
+/* 付録：新聞の切り抜き */
+.clip{position:relative;background:#E4DCC8;color:#231E16;padding:16px 16px 14px;border-radius:1px;box-shadow:0 10px 26px rgba(0,0,0,.45);display:grid;gap:8px}
+.clip:nth-child(odd){transform:rotate(-.6deg)}
+.clip:nth-child(even){transform:rotate(.5deg)}
+@media (prefers-reduced-motion:reduce){.clip{transform:none !important}}
+.clip .dateline{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-family:var(--en);font-size:.74rem;letter-spacing:.06em;border-bottom:1px solid rgba(35,30,22,.35);padding-bottom:4px}
+.clip h3{margin:0;font-family:var(--en);font-weight:700;font-size:1.22rem;line-height:1.25;color:#231E16;text-wrap:balance}
+.clip .body{margin:0;font-family:var(--en);font-size:.98rem;line-height:1.6}
+.clip .ja{margin:0;font-family:var(--mincho);font-size:.9rem;line-height:1.8;color:#4a4236;border-top:1px dashed rgba(35,30,22,.3);padding-top:8px}
+.clip .words{margin:0;padding:0;list-style:none;display:grid;gap:2px;font-size:.84rem}
+.clip .words b{font-family:var(--en)}
+.clip .acts{display:flex;gap:12px}
+.clip .tiny{color:rgba(35,30,22,.75)}
+.clip .margin-note{justify-self:end;max-width:85%;font-family:"Segoe Script","Bradley Hand","Snell Roundhand",cursive;font-size:1rem;color:#8A1F2B;transform:rotate(-2deg);text-align:right}
+.clip .margin-note small{display:block;font-family:var(--mincho);font-size:.78rem;color:#7a3a40}
+.narr-line{font-family:var(--mincho);font-size:.95rem;line-height:1.95;color:var(--dim);padding:2px 2px 2px 14px}
+.quote{margin:0;display:grid;gap:8px;padding:16px 16px 12px;background:var(--paper);color:var(--paper-ink);border-radius:2px}
+.quote figcaption{font-size:.74rem;letter-spacing:.12em;color:rgba(30,26,20,.6)}
+.quote blockquote{margin:0;font-family:var(--mincho);font-size:1.05rem;line-height:1.9}
+.quote .line-en{color:#3a3328;font-size:1rem;font-style:italic}
+.quote .tiny{justify-self:start;color:rgba(30,26,20,.7)}
+</style>
+
+<div class="wrap">
+  <header class="hd">
+    <div class="shelf">
+      <select id="bookSel" aria-label="本棚"></select>
+      <button class="chip ui" id="newBookBtn" type="button">原作から作る</button>
+    </div>
+    <div class="title-row">
+      <h1 id="bookTitle"></h1>
+      <div class="ribbons" id="ribbons" role="group" aria-label="英語のレベル" hidden></div>
+    </div>
+    <p class="level-note" id="levelNote" hidden></p>
+    <p class="sub">登場人物の会話は英語です。あなたの返しを、かたまりごとに積み上げて言いましょう。</p>
+    <p class="src" id="bookSrc" hidden></p>
+    <nav class="chapters" id="chapters" aria-label="章"></nav>
+  </header>
+
+  <!-- 物語 -->
+  <main id="storyView" class="stack" style="gap:18px">
+    <div class="page" id="narr" tabindex="0" aria-label="章のはじまり"></div>
+    <p class="scroll-hint">文が続くときは、左へスクロールします</p>
+    <ol class="log" id="log"></ol>
+
+    <section class="card" id="practice" aria-live="polite">
+      <div class="card-hd">
+        <h2 id="replyTitle">あなたの返し</h2>
+        <button type="button" class="audio-toggle" id="audioBtn" aria-pressed="true">音声 自動</button>
+        <span class="count" id="count"></span>
+      </div>
+      <div class="meter"><span id="meterFill" style="width:0"></span></div>
+      <p class="qtext" id="qtext"></p>
+
+      <div id="inputArea" class="stack">
+        <div class="modes" role="group" aria-label="答え方">
+          <button type="button" data-mode="keyboard" aria-pressed="true">キーボード</button>
+          <button type="button" data-mode="voice" aria-pressed="false">音声</button>
+          <button type="button" data-mode="tiles" aria-pressed="false">並べ替え</button>
+        </div>
+        <div id="typeArea" class="stack">
+          <textarea id="ans" rows="3" placeholder="英語で入力" enterkeyhint="enter" autocapitalize="sentences" autocomplete="off" spellcheck="false" lang="en"></textarea>
+          <div class="microw" id="micRow" hidden>
+            <button id="micBtn" class="mic" type="button" aria-pressed="false" aria-label="音声入力">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+            </button>
+            <p class="miclabel" id="micLabel"></p>
+          </div>
+        </div>
+        <div id="tileArea" class="stack" hidden>
+          <div class="tiles-ans" id="tilesAns"></div>
+          <div class="tiles-pool" id="tilesPool"></div>
+        </div>
+        <p class="note" id="note" role="status"></p>
+        <button class="btn primary" id="judgeBtn" type="button">判定する</button>
+        <div class="row">
+          <button class="tiny" id="hintBtn" type="button">ヒント</button>
+          <button class="tiny" id="clearBtn" type="button">消す</button>
+          <button class="tiny" id="skipBtn" type="button">答えを見る</button>
+        </div>
+      </div>
+
+      <div id="resultArea" class="stack" hidden>
+        <span class="badge" id="badge"></span>
+        <div class="cmp">
+          <div class="cmprow" id="userRow"><span class="cl">あなたの答え</span><p class="en" id="userLine"></p></div>
+          <div class="cmprow"><span class="cl">お手本</span><p class="en" id="modelLine"></p></div>
+        </div>
+        <div class="pair">
+          <button class="btn" id="speakBtn" type="button">お手本を聞く</button>
+          <button class="btn" id="retryBtn" type="button">もう一度</button>
+        </div>
+        <button class="btn primary" id="nextBtn" type="button">次へ</button>
+      </div>
+    </section>
+
+    <section id="endArea" class="stack" style="gap:18px" hidden>
+      <div class="page" id="outro" tabindex="0" aria-label="章の終わり"></div>
+      <div class="card endcard">
+        <h3 id="endTitle"></h3>
+        <figure class="quote" id="quoteBox" hidden>
+          <figcaption id="quoteLabel">原作の一節</figcaption>
+          <blockquote id="quoteJa"></blockquote>
+          <p class="line-en" id="quoteEn"></p>
+          <button type="button" class="tiny" id="quotePlay">英語で聞く</button>
+        </figure>
+        <p id="endScore"></p>
+        <button class="btn primary" id="nextChBtn" type="button">次の章へ</button>
+        <div class="stack" id="aiBox">
+          <p>AIに次の章を書いてもらえます。展開の希望があれば書いてください（なくても大丈夫です）。</p>
+          <textarea id="wish" class="ja" rows="2" placeholder="例：蔵の中を調べたい／怪しい人物のあとをつける"></textarea>
+          <label class="stack" id="srcMoreBox" style="gap:4px;font-size:.84rem">原作の続きの場面（任意）
+            <textarea id="srcMore" class="ja" rows="4" placeholder="青空文庫などから、次に進めたい場面の文章を貼ると、それに沿って章を書きます"></textarea>
+          </label>
+          <button class="btn primary" id="genBtn" type="button">AIで次の章を書く</button>
+          <p class="note" id="genMsg" role="status"></p>
+        </div>
+        <div class="pair">
+          <button class="btn" id="replayBtn" type="button">この章をもう一度</button>
+          <button class="btn" id="copyChBtn" type="button">GitHub版の形式でコピー</button>
+        </div>
+        <div class="copybox" id="copyBox" hidden>
+          <p class="note" id="copyMsg" role="status"></p>
+          <textarea id="copyText" readonly rows="6"></textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 原作から作る -->
+  <section id="newView" class="card form" hidden>
+    <h2>原作から新しい本を作る</h2>
+    <p>著作権の切れた作品（青空文庫など）の場面を貼ると、AIがその人物と設定で第一章を作ります。原作の人物が英語で話しかけてきて、あなたも物語に加わります。</p>
+    <label>作品名
+      <input type="text" class="text" id="nbTitle" placeholder="例：D坂の殺人事件">
+    </label>
+    <label>作者 <span>（任意）</span>
+      <input type="text" class="text" id="nbAuthor" placeholder="例：江戸川乱歩">
+    </label>
+    <label>あなたの役 <span>（任意。空欄ならAIが決めます）</span>
+      <input type="text" class="text" id="nbRole" placeholder="例：明智小五郎の友人の「私」">
+    </label>
+    <label>第一章にしたい場面の文章 <span>（1〜2場面、目安は1,000〜5,000字）</span>
+      <textarea id="nbText" class="ja" rows="8" placeholder="青空文庫などからコピーして貼り付けてください"></textarea>
+    </label>
+    <p class="note" id="nbCount"></p>
+    <button class="btn primary" id="nbGenBtn" type="button">第一章を作る</button>
+    <p class="note" id="nbMsg" role="status"></p>
+    <button class="btn" id="nbCancel" type="button">本棚にもどる</button>
+  </section>
+
+  <!-- 付録 -->
+  <section id="extrasView" class="book" hidden>
+    <h2 id="extrasTitle"></h2>
+    <p class="empty" id="extrasNote" style="margin:0"></p>
+    <div id="extrasBody" class="stack" style="gap:22px"></div>
+  </section>
+
+  <!-- セリフ帳 -->
+  <section id="bookView" class="book" hidden>
+    <h2>セリフ帳</h2>
+    <div id="bookBody" class="stack" style="gap:16px"></div>
+    <div class="card">
+      <h3 style="margin:0">GitHub版で練習する</h3>
+      <p class="empty" style="margin:0">章ごとに、返しのセリフを「英作文スピーキング」のGitHub版の形式でコピーできます。GitHub版の「問題追加」→「手入力で追加」に貼ると、マイクで話して練習できます。</p>
+      <ul id="copyList" class="stack" style="list-style:none;margin:0;padding:0;gap:6px"></ul>
+      <div class="copybox" id="bookCopyBox" hidden>
+        <p class="note" id="bookCopyMsg" role="status"></p>
+        <textarea id="bookCopyText" readonly rows="6"></textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="pair">
+        <button class="btn" id="resetProgBtn" type="button">この本の進み具合をリセット</button>
+        <button class="btn" id="delAiBtn" type="button">AIで書いた章を消す</button>
+      </div>
+      <button class="btn" id="delBookBtn" type="button" hidden>この本を本棚から消す</button>
+      <p class="note" id="bookMsg" role="status"></p>
+      <p class="note" id="saveNote"></p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+
+/* ================= 本棚（最初から入っている本） ================= */
+var KIRI = {
+  id: 'kiri', title: '霧ヶ淵事件帖', accent: '#E2A94B',
+  world: {
+    place: '昭和二十年代後半、湖と山にかこまれた霧ヶ淵村。村いちばんの旧家・鷺沼家',
+    you: '東京で探偵事務所を開く私立探偵（あなた）',
+    cast: [
+      {name:'磯部巡査', role:'村の駐在所の巡査。人がよく、噂話にくわしい'},
+      {name:'お初', role:'鷺沼家の古い女中。村の言い伝えをおそれている'},
+      {name:'鷺沼静江', role:'亡くなった当主・宗右衛門の長女。気丈だが何かを隠している'},
+      {name:'黒須弁護士', role:'鷺沼家の顧問弁護士。遺言状を預かっている'}
+    ],
+    tone: '古い旧家、奇妙な遺言状、湖から立ちのぼる霧、村の言い伝え。不気味さと謎を雰囲気で描き、残酷な描写はしない'
+  },
+  chapters: [{
+    id: 'ch1',
+    title: '霧の村へ',
+    narration: [
+      '昭和二十八年、秋。',
+      '汽車を三度乗り継いだ先に、その村はあった。山にかこまれた霧ヶ淵村。湖から立ちのぼる霧が、夕暮れになると村じゅうを白く閉ざしてしまう。',
+      '村いちばんの旧家、鷺沼家の当主・宗右衛門が亡くなったのは、三日前のことだ。残された遺言状があまりに奇妙だというので、東京で探偵事務所を開くあなたのもとに、一通の電報が届いた。',
+      '――至急、来ラレタシ。'
+    ],
+    outro: [
+      'その夜。あてがわれた離れの部屋で、あなたは眠れずにいた。',
+      '霧の向こう、蔵のある方角から、鈍い鐘の音が三度、ゆっくりと響いた。',
+      '鷺沼家の蔵に、鐘などないはずだった。'
+    ],
+    exchanges: [
+      {speaker:'磯部巡査', en:"You must be the detective from Tokyo. I've come to take you to the Saginuma house.", ja:'東京から来た探偵さんですね。鷺沼家までご案内します。',
+       reply:{ja:'遠いところをわざわざ迎えに来てくださって、ありがとうございます。', en:'Thank you for coming all this way to meet me.', items:[
+        {q:'ありがとうございます', a:'Thank you'},
+        {q:'わざわざ遠くまで来てくださって', a:'for coming all this way'},
+        {q:'わざわざ遠くまで来てくださって、ありがとうございます', a:'Thank you for coming all this way'},
+        {q:'私を迎えに', a:'to meet me'},
+        {q:'遠いところをわざわざ迎えに来てくださって、ありがとうございます。', a:'Thank you for coming all this way to meet me.', full:true}]}},
+      {speaker:'磯部巡査', en:'Old Mr. Saginuma died three days ago, and the whole village is talking about his will.', ja:'鷺沼の大旦那が亡くなって三日。村じゅうが遺言状の噂でもちきりですよ。',
+       reply:{ja:'遺言状に何が書かれていたのか、正確に教えていただけますか。', en:'Could you tell me exactly what was written in the will?', items:[
+        {q:'正確に教えていただけますか', a:'Could you tell me exactly'},
+        {q:'何が書かれていたのか', a:'what was written'},
+        {q:'遺言状に何が書かれていたのか', a:'what was written in the will'},
+        {q:'遺言状に何が書かれていたのか、正確に教えていただけますか。', a:'Could you tell me exactly what was written in the will?', full:true}]}},
+      {speaker:'お初', en:'Please hurry inside. No one goes out after dark when the fog comes down from the lake.', ja:'早く中へお入りください。湖から霧が下りてくると、日が暮れてからは誰も外へ出ないのです。',
+       reply:{ja:'霧が出ると、なぜ村の人たちは夜に外へ出ないのですか。', en:"Why don't the villagers go out at night when the fog comes?", items:[
+        {q:'なぜ村の人たちは外へ出ないのですか', a:"Why don't the villagers go out"},
+        {q:'なぜ村の人たちは夜に外へ出ないのですか', a:"Why don't the villagers go out at night"},
+        {q:'霧が出ると', a:'when the fog comes'},
+        {q:'霧が出ると、なぜ村の人たちは夜に外へ出ないのですか。', a:"Why don't the villagers go out at night when the fog comes?", full:true}]}},
+      {speaker:'鷺沼静江', en:'My father wrote that everything goes to the person who finds the key hidden in the old storehouse.', ja:'父は遺言状に、古い蔵に隠された鍵を見つけた者に、すべてを譲ると書いたのです。',
+       reply:{ja:'その鍵が見つかるまで、誰も蔵に近づかないようにしてください。', en:'Please make sure that no one goes near the storehouse until the key is found.', items:[
+        {q:'必ず〜するようにしてください', a:'Please make sure'},
+        {q:'誰も蔵に近づかないように', a:'that no one goes near the storehouse'},
+        {q:'誰も蔵に近づかないようにしてください', a:'Please make sure that no one goes near the storehouse'},
+        {q:'その鍵が見つかるまで', a:'until the key is found'},
+        {q:'その鍵が見つかるまで、誰も蔵に近づかないようにしてください。', a:'Please make sure that no one goes near the storehouse until the key is found.', full:true}]}}
+    ]
+  }]
+};
+
+var ST = {
+  id: 'st', title: '少年探偵団', accent: '#8CC3F2',
+  source: '江戸川乱歩『少年探偵団』（青空文庫）の設定をもとにした翻案です。細かな展開は原作と異なります。',
+  world: {
+    place: '昭和十年代の東京。お屋敷町と、夕暮れの路地や空き地',
+    you: '小林芳雄少年がひきいる少年探偵団に入ったばかりの、新しい団員（あなた）',
+    cast: [
+      {name:'小林芳雄', role:'名探偵・明智小五郎の助手で、少年探偵団の団長。落ち着いていて勇敢'},
+      {name:'篠崎始', role:'少年探偵団の団員。家に、呪いの言い伝えのある古い宝石がある'},
+      {name:'桂正一', role:'少年探偵団の団員。篠崎の友だちで、元気がよい'},
+      {name:'明智小五郎', role:'名探偵。少年たちが信頼する先生'}
+    ],
+    tone: '東京の町にひそむ「黒い魔物」のうわさ、呪いの宝石、少年たちの勇気と友情。怪しくてどきどきするが、怖すぎない少年向けの語り口（です・ます調）'
+  },
+  chapters: [{
+    id: 'st-ch1',
+    title: '黒い魔物のうわさ',
+    narration: [
+      'そのころ、東京の町には、奇妙なうわさが広まっていました。',
+      '夕暮れの薄暗い路地に、影のようにまっ黒な人のかたちがあらわれる。人が近づくと、すうっと闇にとけるように消えてしまう。町の人たちは、それを「黒い魔物」と呼んで、おそれていたのです。',
+      'あなたは、名探偵明智小五郎の助手、小林芳雄少年がひきいる少年探偵団に、入ったばかりの新しい団員です。',
+      'ある日の放課後、団員の二人が、息をきらしてあなたのところへかけてきました。'
+    ],
+    outro: [
+      'その夜。篠崎家の高い塀のかげで、少年たちは息をひそめていました。',
+      '月が雲にかくれた、そのときです。塀の上に、まっ黒な人かげが、ぬうっと立ちあがったではありませんか。',
+      'ああ、黒い魔物！ その正体は、いったい何者なのでしょう。'
+    ],
+    exchanges: [
+      {speaker:'桂正一', en:"We saw it! A black figure was standing in the empty lot near Shinozaki's house.", ja:'見たんだよ！篠崎くんの家の近くの空き地に、まっ黒なやつが立っていたんだ。',
+       reply:{ja:'落ち着いて、何を見たのか順番に話してくれないか。', en:'Calm down and tell me what you saw, one thing at a time.', items:[
+        {q:'落ち着いて', a:'Calm down'},
+        {q:'何を見たのか話して', a:'tell me what you saw'},
+        {q:'落ち着いて、何を見たのか話して', a:'Calm down and tell me what you saw'},
+        {q:'順番に', a:'one thing at a time'},
+        {q:'落ち着いて、何を見たのか順番に話してくれないか。', a:'Calm down and tell me what you saw, one thing at a time.', full:true}]}},
+      {speaker:'篠崎始', en:"When we shouted, it didn't run away. It just melted into the darkness.", ja:'ぼくたちが叫んでも、逃げなかった。すうっと暗やみにとけて消えたんだ。',
+       reply:{ja:'それが本当なら、ただのいたずらではないかもしれない。', en:"If that's true, it may not be just a prank.", items:[
+        {q:'それが本当なら', a:"If that's true"},
+        {q:'ただのいたずら', a:'just a prank'},
+        {q:'ただのいたずらではないかもしれない', a:'it may not be just a prank'},
+        {q:'それが本当なら、ただのいたずらではないかもしれない。', a:"If that's true, it may not be just a prank.", full:true}]}},
+      {speaker:'篠崎始', en:'My father keeps an old jewel from India at home. People say it carries a curse.', ja:'父さんが、インドから来た古い宝石を家にしまっているんだ。のろいがかかっているって言われてる。',
+       reply:{ja:'君の家にその宝石があることを、ほかに誰が知っているの？', en:'Who else knows that your family has the jewel?', items:[
+        {q:'ほかに誰が知っているの', a:'Who else knows'},
+        {q:'君の家にその宝石があること', a:'that your family has the jewel'},
+        {q:'君の家にその宝石があることを、ほかに誰が知っているの？', a:'Who else knows that your family has the jewel?', full:true}]}},
+      {speaker:'小林芳雄', en:"Good question. Tonight, the Boy Detectives Club will keep watch over the Shinozaki house.", ja:'いい質問だ。今夜、少年探偵団で篠崎くんの家を見はろう。',
+       reply:{ja:'懐中電灯と呼び子笛を持って、暗くなる前に行きます。', en:"I'll bring a flashlight and a whistle and be there before dark.", items:[
+        {q:'懐中電灯と呼び子笛を持っていきます', a:"I'll bring a flashlight and a whistle"},
+        {q:'暗くなる前に', a:'before dark'},
+        {q:'(私は)暗くなる前に行きます', a:"I'll be there before dark"},
+        {q:'懐中電灯と呼び子笛を持って、暗くなる前に行きます。', a:"I'll bring a flashlight and a whistle and be there before dark.", full:true}]}}
+    ]
+  }]
+};
+/* 個人で楽しむ用の創作（前日譚）。原作のセリフや場面は使わない */
+var MISERY = {
+  id: 'misery', title: 'アニーのアルバム', accent: '#E0939A', fanwork: true,
+  source: 'スティーヴン・キング『ミザリー』の人物をもとにした、個人用の創作（前日譚）です。原作のセリフや場面は使っていません。',
+  world: {
+    place: '1980年代前半、アメリカ・コロラド州の雪深い町にある、聖アグネス病院',
+    you: 'この病院に配属されたばかりの、新人看護師（あなた）',
+    cast: [
+      {name:'アニー・ウィルクス', role:'看護師長。几帳面で信心深く、汚い言葉を決して使わない。機嫌が急に変わる。新聞の切り抜きをアルバムに貼るのが趣味'},
+      {name:'マージ', role:'夜勤の同僚看護師。噂好きだが、勘が鋭い'},
+      {name:'ハリス医師', role:'病院の医師。忙しく、看護師長を信頼しきっている'}
+    ],
+    tone: '静かに積み重なる違和感と恐怖。雪に閉ざされた病院の夜。暴力や死を直接は描かず、切り抜きや会話の気配で怖さを出す'
+  },
+  chapters: [{
+    id: 'misery-1',
+    title: '新しい看護師長',
+    narration: [
+      '古いスクラップブックの、いちばん最初のページ。黄ばんだ新聞の切り抜きが、きちんとまっすぐに貼られている。',
+      '一九八一年、冬。雪深いコロラドの町の、聖アグネス病院。',
+      'その朝、あなたは新人看護師として、初めて病棟の扉を開けた。消毒液のにおいの向こうで、白い制服の大柄な女性が、にこりともせずにこちらを見ていた。'
+    ],
+    exchanges: [
+      {speaker:'アニー・ウィルクス', en:"You must be the new nurse. I'm Annie Wilkes, the head nurse. I like things neat and clean.", ja:'あなたが新しい看護師さんね。看護師長のアニー・ウィルクスよ。私、きちんとしているのが好きなの。',
+       reply:{ja:'はじめまして。あなたから学べるのを楽しみにしています。', en:"Nice to meet you. I'm looking forward to learning from you.", items:[
+        {q:'はじめまして', a:'Nice to meet you'},
+        {q:'あなたから学ぶこと', a:'learning from you'},
+        {q:'あなたから学べるのを楽しみにしています', a:"I'm looking forward to learning from you"},
+        {q:'はじめまして。あなたから学べるのを楽しみにしています。', a:"Nice to meet you. I'm looking forward to learning from you.", full:true}]}},
+      {speaker:'アニー・ウィルクス', en:'Rule number one: we never use dirty words on my ward. Never.', ja:'決まりその一。私の病棟では、汚い言葉は決して使わないこと。決してよ。',
+       reply:{ja:'わかりました。言葉づかいには気をつけます。', en:"I understand. I'll be careful about the words I use.", items:[
+        {q:'わかりました', a:'I understand'},
+        {q:'気をつけます', a:"I'll be careful"},
+        {q:'言葉づかいには気をつけます', a:"I'll be careful about the words I use"},
+        {q:'わかりました。言葉づかいには気をつけます。', a:"I understand. I'll be careful about the words I use.", full:true}]}},
+      {before:'夜勤の休憩室。コーヒーの湯気の向こうで、同僚のマージが声をひそめた。',
+       speaker:'マージ', en:'Be careful with her. Last winter, three patients on her shift died in a single week.', ja:'あの人には気をつけて。去年の冬、あの人の夜勤のときに、一週間で三人も患者さんが亡くなったの。',
+       reply:{ja:'偶然だったのかもしれないけど、誰か調べたの？', en:'That might have been a coincidence, but did anyone look into it?', items:[
+        {q:'偶然だったのかもしれない', a:'That might have been a coincidence'},
+        {q:'誰か調べたの', a:'did anyone look into it'},
+        {q:'偶然だったのかもしれないけど、誰か調べたの？', a:'That might have been a coincidence, but did anyone look into it?', full:true}]}},
+      {before:'真夜中。ナースステーションに戻ると、アニーがひとりで分厚いアルバムを広げ、新聞の切り抜きに、ていねいにのりを塗っていた。',
+       speaker:'アニー・ウィルクス', en:"Oh, this? It's just my scrapbook. I keep all my memories in here.", ja:'あら、これ？ ただの私のスクラップブックよ。思い出は全部ここにしまってあるの。',
+       reply:{ja:'そこにどんな思い出をしまっているのか、見せてもらえますか。', en:'Could you show me what kind of memories you keep in it?', items:[
+        {q:'見せてもらえますか', a:'Could you show me'},
+        {q:'どんな思い出', a:'what kind of memories'},
+        {q:'そこにどんな思い出をしまっているのか', a:'what kind of memories you keep in it'},
+        {q:'そこにどんな思い出をしまっているのか、見せてもらえますか。', a:'Could you show me what kind of memories you keep in it?', full:true}]}}
+    ],
+    outro: [
+      'アニーはにっこりと笑って、アルバムをぱたんと閉じた。「まだだめよ。あなたが、ここに慣れたらね。」',
+      'その笑顔は、なぜか少しも笑っていないように見えた。',
+      '窓の外では、雪が音もなく降りつづいている。ナースステーションの時計が、午前三時を指していた。'
+    ],
+    quote: {label:'アルバムの切り抜き（架空の記事）', ja:'聖アグネス病院に新しい看護師長――「患者さんは、私の家族です」', en:'New Head Nurse at St. Agnes Hospital: "My Patients Are My Family"'}
+  }],
+  /* 付録：アルバムの切り抜き（すべて架空の記事） */
+  extras: {
+    title: '付録　アルバムの切り抜き',
+    note: 'アニーのスクラップブックに貼られていた切り抜きです。記事も新聞も、すべて架空のものです。余白には、アニーの手書きの書き込みがあります。',
+    items: [
+      {paper:'The Valley Courier', date:'March 14, 1958',
+       head:'Local Girl, 11, Wins County Spelling Bee',
+       en:'Annie Wilkes, 11, won first prize at the county spelling bee on Saturday. She spelled the final word, "immaculate," without a pause. When asked about her secret, Annie smiled and said, "I only like clean words. Dirty words make me sick." Her teacher called her "the neatest girl in the whole school."',
+       ja:'【地元の少女（11）、郡のスペリング大会で優勝】アニー・ウィルクスさん（11）が、土曜日に行われた郡のスペリング大会で優勝した。最後の単語「immaculate（しみひとつない）」を、ためらうことなくつづった。秘訣を聞かれると、アニーさんはほほえんで答えた。「きれいな言葉だけが好きなの。汚い言葉は、気分が悪くなるわ。」担任の先生は、彼女を「学校じゅうでいちばん、きちんとした子」と呼んだ。',
+       words:[['immaculate','しみひとつない、完ぺきに清潔な'],['without a pause','ためらわずに、つかえずに'],['neat','きちんとした']],
+       margin:{en:'My first clipping. ★', ja:'私の最初の切り抜き。★'}},
+      {paper:'The Front Range Herald', date:'June 2, 1966',
+       head:'Nursing School Honors Its Top Graduate',
+       en:'Annie Wilkes graduated first in her class from the Mountain View School of Nursing on Friday. Her instructors praised her strong hands and her calm manner. "She never misses a detail," said one teacher. "And she never, ever lets a patient break the rules."',
+       ja:'【看護学校、首席卒業生を表彰】アニー・ウィルクスさんが金曜日、マウンテンビュー看護学校を首席で卒業した。教官たちは、彼女の力強い手と、落ち着いた態度をほめた。「細かいところを、決して見落とさない学生です」とある教官は語った。「そして、患者に決まりを破らせることは、絶対にありません。」',
+       words:[['graduate first in one’s class','首席で卒業する'],['praise','ほめる'],['break the rules','決まりを破る']],
+       margin:{en:'Rules keep people safe.', ja:'決まりが、人を守るのよ。'}},
+      {paper:'The Front Range Herald', date:'January 9, 1971',
+       head:'Nursing Student Dies in Stairway Fall',
+       en:'A 22-year-old nursing student died early Sunday after falling down the stairs of her boarding house. Police said the stairs were icy and called it an accident. Her roommate, Annie Wilkes, told reporters, "She was always in such a hurry. I told her to be careful." No further investigation is planned.',
+       ja:'【看護学生、階段から転落して死亡】22歳の看護学生が日曜日の早朝、下宿の階段から転落して亡くなった。警察は、階段が凍っていたとして、事故と判断した。同室のアニー・ウィルクスさんは、記者にこう語った。「あの子は、いつも急いでばかりいたの。気をつけてって言ったのに。」これ以上の捜査は予定されていない。',
+       words:[['boarding house','下宿'],['in a hurry','急いで'],['investigation','捜査、調査']],
+       margin:{en:'She played her radio much too loud.', ja:'あの子、ラジオの音が大きすぎたのよ。'}},
+      {paper:'The Snowfield Gazette', date:'February 20, 1980',
+       head:'Flu Season Hits St. Agnes Hard',
+       en:'Three elderly patients died at St. Agnes Hospital in a single week, hospital officials confirmed. Doctors blamed a severe winter flu. The ward’s night nurse, Annie Wilkes, worked double shifts all week. "She sat with every patient until the end," said Dr. Harris. "We are lucky to have her."',
+       ja:'【インフルエンザ、聖アグネス病院を直撃】聖アグネス病院で、一週間のうちに高齢の患者三人が亡くなったことを、病院が認めた。医師たちは、冬の重いインフルエンザが原因だとしている。病棟の夜勤看護師アニー・ウィルクスさんは、その週ずっと、二人分の勤務をこなした。「彼女は、どの患者さんのそばにも最後まで付きそっていました」とハリス医師は語る。「あんな看護師がいてくれて、私たちは幸運です。」',
+       words:[['confirm','確認する、認める'],['blame A on B / blame B','〜のせいにする'],['double shift','二人分の勤務、連続勤務']],
+       margin:{en:'They were all so tired. I helped them rest.', ja:'みんな、とても疲れていたの。休ませてあげたのよ。'}},
+      {paper:'The Snowfield Gazette', date:'December 1, 1981',
+       head:'St. Agnes Head Nurse Named "Nurse of the Year"',
+       en:'Annie Wilkes, head nurse at St. Agnes Hospital, received the county’s Nurse of the Year award on Tuesday. In her speech, she thanked God and her patients. "A good nurse keeps everything neat and clean," she said, "even the things nobody else can see." A new nurse joined her ward this month.',
+       ja:'【聖アグネス病院の看護師長、「今年の看護師」に】聖アグネス病院の看護師長アニー・ウィルクスさんが火曜日、郡の「今年の看護師」賞を受賞した。スピーチで彼女は、神と患者たちに感謝をささげた。「よい看護師は、すべてをきちんと、きれいにしておくものです。ほかの誰にも見えないところまで。」今月、彼女の病棟には、新しい看護師がひとり加わった。',
+       words:[['receive an award','賞を受ける'],['thank','感謝する'],['join','加わる、入る']],
+       margin:{en:'The new girl asks too many questions.', ja:'新しい子は、質問が多すぎるわ。'}}
+    ]
+  }
+};
+/* ================= レベル別の英文 =================
+   e2（英検2級）＝本文に書いてある英文。ここには e3（3級）・p1（準1級）・narr（語り手版の地の文）を書く。
+   L(相手の英語, あなたの返しの英語, あなたの返しの日本語（省略時は2級と同じ）, [[日本語, 英語], ...])
+   N(地の文の日本語, 地の文の英語, [[日本語, 英語], ...])
+   かたまりの英語は、必ず全文の英語の中の連続した一部分にする。全文の問題は自動で最後に足す。 */
+function L(en, ren, rja, items){ return {en:en, ren:ren, rja:rja, items:items}; }
+function N(ja, en, items){ return {ja:ja, en:en, items:items}; }
+var LEVELS = {
+  'chumon-1': {
+    e3: [
+      L('I lost a lot of money on that dog. I want to go back now.', "I'm cold and hungry. I want to go back too.", '寒いし、おなかも空いた。ぼくも戻りたい。',
+        [['寒いし、おなかも空いた', "I'm cold and hungry"], ['ぼくも戻りたい', 'I want to go back too']]),
+      L("I'm very hungry. My stomach hurts.", "Me too. I don't want to walk anymore.", 'ぼくもそうだ。もう歩きたくないな。',
+        [['ぼくもそうだ', 'Me too'], ['もう歩きたくない', "I don't want to walk anymore"]]),
+      L("Look! A restaurant! Let's go in.", "It's strange, but we can eat something there.", 'おかしいね。でも、そこで何か食べられるだろう。',
+        [['おかしいね', "It's strange"], ['そこで何か食べられる', 'we can eat something there']]),
+      L("Please come in, everyone. Don't be shy.", 'This restaurant gives us free food!', 'この料理店は、ただでごちそうしてくれるんだ！',
+        [['この料理店は', 'This restaurant'], ['ただのごちそう', 'free food']])
+    ],
+    p1: [
+      L("That dog set me back twenty-four hundred yen. I've had enough; I'm heading back.", "It's getting chilly and I'm starving, so I'm inclined to head back as well.", 'ちょうど寒くなってきたし、おなかもぺこぺこだから、ぼくも戻ろうという気になっている。',
+        [['寒くなってきた', "It's getting chilly"], ['おなかがぺこぺこだ', "I'm starving"], ['寒くなってきたし、おなかもぺこぺこだ', "It's getting chilly and I'm starving"], ['ぼくも戻ろうという気になっている', "I'm inclined to head back as well"]]),
+      L("I'm famished. I've had a stitch in my side for ages.", "Same here. I really don't feel like walking another step.", 'ぼくもそうだ。もう一歩も歩く気がしないよ。',
+        [['ぼくもそうだ', 'Same here'], ['もう本当に歩く気がしない', "I really don't feel like walking"], ['もう一歩も', 'another step']]),
+      L('What luck! This place is more civilized than it looks. Shall we go in?', "It's odd to come across one out here, but surely they'll serve us a decent meal.", 'こんなところにおかしいね。でも、きっとちゃんとした食事を出してくれるだろう。',
+        [['こんなところにあるのはおかしい', "It's odd to come across one out here"], ['出してくれる', "they'll serve us"], ['きっとちゃんとした食事を出してくれるだろう', "surely they'll serve us a decent meal"]]),
+      L('All are welcome. Please come in, and do not hesitate in the least.', 'Apparently this place is going to wine and dine us free of charge.', 'どうやらこの店は、ただでごちそうしてくれるらしいぞ。',
+        [['どうやらこの店は', 'Apparently this place'], ['(この店は)ごちそうしてくれる', "It's going to wine and dine us"], ['(この店は)ただでごちそうしてくれる', "It's going to wine and dine us free of charge"]])
+    ],
+    narr: [
+      N('二人の若い紳士が、イギリスの兵隊のかたちをして、ぴかぴかする鉄砲をかつぎ、白熊のような犬を二匹つれて、山奥を歩いていました。',
+        'Two young gentlemen, dressed like British soldiers and carrying shiny guns, were walking deep in the mountains with two dogs as big as polar bears.',
+        [['二人の若い紳士', 'Two young gentlemen'], ['イギリスの兵隊のかたちをして', 'dressed like British soldiers'], ['ぴかぴかする鉄砲をかついで', 'carrying shiny guns'], ['(二人は)山奥を歩いていました', 'They were walking deep in the mountains'], ['白熊のような犬を二匹つれて', 'with two dogs as big as polar bears']]),
+      N('ところが、どっちへ行けば戻れるのか、いっこうに見当がつかなくなっていました。',
+        'However, they had no idea which way would lead them back.',
+        [['まったく見当がつかなかった', 'they had no idea'], ['どっちへ行けば戻れるのか', 'which way would lead them back']]),
+      N('その時ふとうしろを見ますと、立派な一軒の西洋造りの家がありました。',
+        'Just then, they happened to look back and saw a splendid Western-style house.',
+        [['その時', 'Just then'], ['ふとうしろを見ると', 'they happened to look back'], ['立派な西洋造りの家', 'a splendid Western-style house']]),
+      N('硝子の開き戸には、金文字でこう書いてありました。',
+        'On the glass door, these words were written in gold letters.',
+        [['硝子の開き戸には', 'On the glass door'], ['金文字で書いてある', 'written in gold letters']])
+    ]
+  },
+  'chumon-2': {
+    e3: [
+      L('We have many orders here. Please understand.', 'It must be busy here, even in the mountains.', 'こんな山の中なのに、はやっているんだね。',
+        [['ここははやっているにちがいない', 'It must be busy here'], ['山の中なのに', 'even in the mountains']]),
+      L('Please comb your hair and clean your shoes here.', 'They like good manners. Important people must come here.', '作法にうるさい家だ。偉い人たちが来るんだろう。',
+        [['作法にうるさい', 'They like good manners'], ['偉い人たちが来るにちがいない', 'Important people must come here']]),
+      L('Please put your glasses, wallets and metal things here.', 'They cook with electricity, so metal is dangerous.', '電気で料理するんだ。だから金物はあぶないんだろう。',
+        [['電気で料理する', 'They cook with electricity'], ['金物はあぶない', 'metal is dangerous']]),
+      L('Please put the cream on your face, hands and feet.', "It's cold outside, so the cream protects our skin.", '外は寒いから、クリームで肌を守るんだ。',
+        [['外は寒い', "It's cold outside"], ['クリームが肌を守る', 'the cream protects our skin']])
+    ],
+    p1: [
+      L('Kindly note that this establishment receives a great many orders.', 'They must be doing a roaring trade, even this far into the mountains.', 'こんな山奥でも、大繁盛しているにちがいない。',
+        [['大繁盛しているにちがいない', 'They must be doing a roaring trade'], ['こんな山奥でも', 'even this far into the mountains']]),
+      L('Esteemed guests, kindly comb your hair and remove the mud from your footwear.', "They're sticklers for etiquette. Distinguished visitors must drop by all the time.", '作法にとても厳しい家だ。身分の高い客が、しょっちゅう来るにちがいない。',
+        [['作法にとても厳しい', "They're sticklers for etiquette"], ['身分の高い客', 'Distinguished visitors'], ['身分の高い客がしょっちゅう来るにちがいない', 'Distinguished visitors must drop by all the time']]),
+      L('Kindly deposit your tie pins, spectacles, wallets and any other metal articles here.', 'They must cook with electricity, which makes anything metallic a hazard.', '電気で料理するにちがいない。だから、金気のものはあぶないんだ。',
+        [['電気で料理するにちがいない', 'They must cook with electricity'], ['金気のもの', 'anything metallic'], ['だから金気のものはあぶない', 'which makes anything metallic a hazard']]),
+      L('Kindly apply the cream in this jar liberally to your face, hands and feet.', 'It must be to stop our skin from chapping in the bitter cold outside.', '外のきびしい寒さで、ひびがきれないようにするためにちがいない。',
+        [['ひびがきれないようにするためにちがいない', 'It must be to stop our skin from chapping'], ['外のきびしい寒さの中で', 'in the bitter cold outside']])
+    ],
+    narr: [
+      N('廊下を進んで行きますと、こんどは水いろのペンキ塗りの扉がありました。',
+        'As they went down the corridor, they came to a door painted pale blue.',
+        [['廊下を進んで行くと', 'As they went down the corridor'], ['扉にたどり着いた', 'they came to a door'], ['水いろのペンキ塗りの扉', 'a door painted pale blue']]),
+      N('また扉が一つあって、そのわきに鏡がかかり、下には長い柄のついたブラシが置いてありました。',
+        'There was yet another door, with a mirror beside it and a long-handled brush below.',
+        [['また扉が一つあった', 'There was yet another door'], ['そのわきに鏡がかかり', 'with a mirror beside it'], ['下に長い柄のブラシ', 'a long-handled brush below']]),
+      N('ブラシを置くやいなや、そいつがぼうっとかすんで無くなって、風がどうっと室に入ってきました。',
+        'The moment they put the brush down, it faded away, and a gust of wind rushed into the room.',
+        [['ブラシを置くやいなや', 'The moment they put the brush down'], ['ぼうっとかすんで消えた', 'it faded away'], ['風がどうっと室に入ってきた', 'a gust of wind rushed into the room']]),
+      N('すこし行きますと、また扉があって、その前に硝子の壺が一つありました。',
+        'A little further on stood another door, with a glass jar in front of it.',
+        [['すこし行くと', 'A little further on'], ['また扉があった', 'There stood another door'], ['その前に硝子の壺', 'with a glass jar in front of it']])
+    ]
+  },
+  'chumon-3': {
+    e3: [
+      L('This is the last order. Please rub salt all over your body.', 'The orders are not for them. They are for us!', '注文は、向こうが受けるんじゃない。ぼくたちへの注文なんだ！',
+        [['注文は向こうのためじゃない', 'The orders are not for them'], ['ぼくたちへの注文なんだ', 'They are for us']]),
+      L("They don't give us food. We are the food!", "Let's run! Oh no, the door won't open!", '逃げよう！だめだ、戸が開かない！',
+        [['逃げよう', "Let's run"], ['戸が開かない', "the door won't open"]]),
+      L("Come in! Don't cry. Your cream will come off!", 'What can we do? I wish our dogs were here.', 'どうしよう。犬がいてくれたらなあ。',
+        [['どうしよう', 'What can we do'], ['犬がいてくれたらなあ', 'I wish our dogs were here']]),
+      L('Sir! Where are you?', "We're here! Come quickly!", 'ここだよ！早く来て！',
+        [['ここだよ', "We're here"], ['早く来て', 'Come quickly']])
+    ],
+    p1: [
+      L('We apologize for our many requests. This is the final one: rub plenty of salt into your body.', "They were never taking our orders. They've been ordering us around all along!", '向こうはこっちの注文を聞いていたんじゃない。ずっと、こっちに注文をつけていたんだ！',
+        [['こちらの注文を聞いていたんじゃない', 'They were never taking our orders'], ['こちらに注文をつける', 'ordering us around'], ['ずっとこちらに注文をつけていたんだ', "They've been ordering us around all along"]]),
+      L("This isn't a place that serves Western cuisine. It's a place that turns its guests into it!", "We have to get out! Oh no, the door won't budge an inch!", '逃げなきゃ！だめだ、戸が少しも動かない！',
+        [['逃げなきゃ', 'We have to get out'], ['戸がびくともしない', "the door won't budge"], ['戸が少しも動かない', "the door won't budge an inch"]]),
+      L("Do come in! Stop your crying, or you'll ruin all that lovely cream.", 'What on earth do we do now? If only our dogs were still with us.', 'いったいどうしたらいいんだ。犬がまだいてくれたら……。',
+        [['いったいどうしよう', 'What on earth do we do now'], ['犬がまだいてくれたら', 'If only our dogs were still with us']]),
+      L('Sirs! Sirs! Can you hear me?', "Over here! We're over here! Hurry, for heaven's sake!", 'ここだ！ここだぞ！たのむから急いでくれ！',
+        [['ここだぞ', "We're over here"], ['たのむから', "for heaven's sake"], ['たのむから急いでくれ', "Hurry, for heaven's sake"]])
+    ],
+    narr: [
+      N('立派な青い塩壺を前に、二人はぎょっとして、クリームを塗った顔を見合わせました。',
+        "Faced with the fine blue salt jar, the two men froze and stared at each other's creamy faces.",
+        [['立派な青い塩壺を前に', 'Faced with the fine blue salt jar'], ['二人はぎょっとした', 'the two men froze'], ['(二人は)クリームを塗った顔を見合わせた', "They stared at each other's creamy faces"]]),
+      N('本当のことに気づいた二人は、がたがたふるえだしました。',
+        'Realizing the truth, the two men began to shake from head to toe.',
+        [['本当のことに気づいて', 'Realizing the truth'], ['(二人は)ふるえだした', 'They began to shake'], ['二人はがたがたふるえだした', 'the two men began to shake from head to toe']]),
+      N('奥の扉のかぎ穴から、きょろきょろ二つの青い眼玉が、こっちをのぞいています。',
+        'Through the keyholes of the inner door, two blue eyeballs were peering out at them.',
+        [['奥の扉のかぎ穴から', 'Through the keyholes of the inner door'], ['二つの青い眼玉', 'two blue eyeballs'], ['(眼玉が)こっちをのぞいていた', 'They were peering out at them']]),
+      N('そのとき、あの白熊のような犬が二匹、扉をつきやぶって飛び込んできました。',
+        'At that moment, the two polar-bear-like dogs burst through the door.',
+        [['そのとき', 'At that moment'], ['あの白熊のような犬が二匹', 'the two polar-bear-like dogs'], ['(犬たちが)扉をつきやぶって飛び込んできた', 'They burst through the door']])
+    ]
+  },
+  'st-ch1': {
+    e3: [
+      L("We saw it! Something black was near Shinozaki's house.", 'Calm down. Tell me what you saw.', '落ち着いて。何を見たのか話して。',
+        [['落ち着いて', 'Calm down'], ['何を見たのか話して', 'Tell me what you saw']]),
+      L("We shouted, but it didn't run. It just went into the dark.", "If that's true, it may not be a joke.", 'それが本当なら、いたずらではないかもしれない。',
+        [['それが本当なら', "If that's true"], ['いたずらではないかもしれない', 'it may not be a joke']]),
+      L('My father has an old jewel from India. People say it is cursed.', 'Who else knows about the jewel?', 'その宝石のことを、ほかに誰が知っているの？',
+        [['ほかに誰が知っているの', 'Who else knows'], ['その宝石のことを', 'about the jewel']]),
+      L("Good question. Tonight, we will watch Shinozaki's house.", "I'll bring a flashlight and come before dark.", '懐中電灯を持って、暗くなる前に行きます。',
+        [['懐中電灯を持っていく', "I'll bring a flashlight"], ['(私は)暗くなる前に行く', "I'll come before dark"]])
+    ],
+    p1: [
+      L("We saw it with our own eyes! A pitch-black figure was lurking in the vacant lot by Shinozaki's place.", 'Take a deep breath and walk me through exactly what you saw.', '深呼吸して、何を見たのか、順を追って正確に話してくれないか。',
+        [['深呼吸して', 'Take a deep breath'], ['順を追って話して', 'walk me through'], ['何を見たのか順を追って正確に話して', 'walk me through exactly what you saw']]),
+      L("Even when we yelled at it, it didn't flee. It simply dissolved into the shadows.", "If that's really what happened, this could be more than a harmless prank.", 'それが本当に起きたことなら、ただのいたずらではすまないかもしれない。',
+        [['それが本当に起きたことなら', "If that's really what happened"], ['害のないいたずら', 'a harmless prank'], ['ただのいたずら以上のものかもしれない', 'this could be more than a harmless prank']]),
+      L("My father keeps an ancient jewel from India in the house. It's rumored to be cursed.", 'Apart from your family, who else is aware that the jewel is in your house?', '家族のほかに、その宝石が君の家にあることを知っているのは誰？',
+        [['家族のほかに', 'Apart from your family'], ['ほかに誰が知っているのか', 'who else is aware'], ['その宝石が君の家にあること', 'that the jewel is in your house']]),
+      L('Sharp question. Tonight the Boy Detectives Club will stake out the Shinozaki residence.', "I'll come equipped with a flashlight and a whistle, and I'll be in position before nightfall.", '懐中電灯と呼び子笛を用意して、日暮れ前には持ち場についています。',
+        [['用意して行く', "I'll come equipped"], ['懐中電灯と呼び子笛を持って', 'with a flashlight and a whistle'], ['日暮れ前には持ち場についている', "I'll be in position before nightfall"]])
+    ],
+    narr: [
+      N('そのころ、東京の町には、「黒い魔物」という奇妙なうわさが広まっていました。',
+        'In those days, a strange rumor about a black demon was spreading through the streets of Tokyo.',
+        [['そのころ', 'In those days'], ['「黒い魔物」という奇妙なうわさ', 'a strange rumor about a black demon'], ['(うわさが)東京の町に広まっていた', 'The rumor was spreading through the streets of Tokyo']]),
+      N('篠崎くんはまっ青な顔で、声をふるわせながら話をつづけました。',
+        'Shinozaki, pale as a sheet, went on in a trembling voice.',
+        [['まっ青な顔で', 'pale as a sheet'], ['(篠崎君は)声をふるわせながら話をつづけた', 'He went on in a trembling voice']]),
+      N('篠崎くんは、しばらくためらってから、家の秘密を打ち明けました。',
+        "After a moment's hesitation, Shinozaki revealed his family's secret.",
+        [['しばらくためらってから', "After a moment's hesitation"], ['(篠崎君は)家の秘密を打ち明けた', "He revealed his family's secret"]]),
+      N('ちょうどそこへ、団長の小林芳雄少年が、落ち着いた足どりでやってきました。',
+        'Just then, Kobayashi, the leader of the club, walked up with calm, steady steps.',
+        [['ちょうどそこへ', 'Just then'], ['団長', 'the leader of the club'], ['(小林君は)落ち着いた足どりでやってきた', 'He walked up with calm, steady steps']])
+    ]
+  },
+  'ch1': {
+    e3: [
+      L("Are you the detective from Tokyo? I'll take you to the Saginuma house.", 'Thank you for meeting me.', '迎えに来てくださって、ありがとうございます。',
+        [['ありがとうございます', 'Thank you'], ['迎えに来てくれて', 'for meeting me']]),
+      L('Old Mr. Saginuma died three days ago. Everyone is talking about his will.', 'Can you tell me what the will said?', '遺言状に何と書いてあったか、教えてくれますか。',
+        [['教えてくれますか', 'Can you tell me'], ['遺言状に何と書いてあったか', 'what the will said']]),
+      L('Please come in quickly. Nobody goes out when the fog comes.', 'Why do people stay inside in the fog?', 'なぜ霧が出ると、みんな家から出ないのですか。',
+        [['なぜみんな家の中にいるのですか', 'Why do people stay inside'], ['霧の中で', 'in the fog']]),
+      L('My father said the finder of the key in the storehouse gets everything.', 'Please keep everyone away from the storehouse.', '誰も蔵に近づけないでください。',
+        [['誰も近づけないでください', 'Please keep everyone away'], ['蔵から', 'from the storehouse']])
+    ],
+    p1: [
+      L("You'd be the detective from Tokyo, I take it. I'm here to escort you to the Saginuma estate.", 'I really appreciate you coming all this way to pick me up.', 'わざわざ遠くまで迎えに来てくださって、本当に感謝します。',
+        [['本当に感謝します', 'I really appreciate'], ['わざわざ遠くまで来てくれて', 'coming all this way'], ['私を迎えに', 'to pick me up']]),
+      L('Old Mr. Saginuma passed away three days ago, and his will is the talk of the village.', 'Would you mind telling me precisely what the will stated?', '遺言状に正確に何と書かれていたのか、教えていただけませんか。',
+        [['教えていただけませんか', 'Would you mind telling me'], ['遺言状に正確に何と書かれていたのか', 'precisely what the will stated']]),
+      L('Do hurry inside. Once the fog rolls in off the lake, not a soul ventures out after dark.', 'Why is it that the villagers refuse to go out at night once the fog sets in?', '霧が出ると、村の人たちが夜に出かけようとしないのは、いったいなぜですか。',
+        [['いったいなぜ', 'Why is it that'], ['村人たちは夜に出かけようとしない', 'the villagers refuse to go out at night'], ['霧が出ると', 'once the fog sets in']]),
+      L('My father stipulated that his entire fortune goes to whoever finds the key hidden in the old storehouse.', 'Until that key turns up, I must insist that nobody sets foot near the storehouse.', 'その鍵が見つかるまでは、誰も蔵に近づかないよう、どうしてもお願いします。',
+        [['その鍵が見つかるまで', 'Until that key turns up'], ['どうしてもお願いしたい', 'I must insist'], ['誰も蔵に近づかない', 'nobody sets foot near the storehouse']])
+    ],
+    narr: [
+      N('汽車を三度乗り継いで、あなたはようやく霧ヶ淵村にたどり着いた。',
+        'After changing trains three times, you finally reached the village of Kirigafuchi.',
+        [['汽車を三度乗り継いで', 'After changing trains three times'], ['ようやくたどり着いた', 'you finally reached'], ['霧ヶ淵村', 'the village of Kirigafuchi']]),
+      N('巡査は、声をひそめて話しはじめた。',
+        'The officer lowered his voice and began to speak.',
+        [['巡査は声をひそめた', 'The officer lowered his voice'], ['(巡査は)話しはじめた', 'He began to speak']]),
+      N('鷺沼家の門の前では、古い女中のお初が、おびえた顔で待っていた。',
+        'At the gate of the Saginuma house, the old maid Ohatsu was waiting with a frightened face.',
+        [['鷺沼家の門の前で', 'At the gate of the Saginuma house'], ['古い女中のお初', 'the old maid Ohatsu'], ['(お初は)おびえた顔で待っていた', 'She was waiting with a frightened face']]),
+      N('奥の座敷で、亡き当主の長女・静江が、あなたを静かに見つめていた。',
+        "In the back room, Shizue, the late master's eldest daughter, was quietly watching you.",
+        [['奥の座敷で', 'In the back room'], ['亡き当主の長女', "the late master's eldest daughter"], ['(静江は)あなたを静かに見つめていた', 'She was quietly watching you']])
+    ]
+  },
+  'misery-1': {
+    e3: [
+      L("You're the new nurse, right? I'm Annie Wilkes. I like things clean.", 'Nice to meet you. I want to learn a lot from you.', 'はじめまして。あなたからたくさん学びたいです。',
+        [['はじめまして', 'Nice to meet you'], ['たくさん学びたい', 'I want to learn a lot'], ['あなたからたくさん学びたいです', 'I want to learn a lot from you']]),
+      L('Rule one: no dirty words on my ward. Never.', "OK. I'll be careful with my words.", 'わかりました。言葉に気をつけます。',
+        [['気をつけます', "I'll be careful"], ['言葉に', 'with my words']]),
+      L('Be careful with her. Three patients died on her shift last winter.', 'Maybe it was chance, but did anyone check?', '偶然だったのかもしれないけど、誰か調べたの？',
+        [['偶然だったのかも', 'Maybe it was chance'], ['誰か調べたの', 'did anyone check']]),
+      L("Oh, this? It's my scrapbook. My memories are in here.", 'Can I see your memories?', 'あなたの思い出を、見てもいいですか。',
+        [['見てもいいですか', 'Can I see'], ['あなたの思い出', 'your memories']])
+    ],
+    p1: [
+      L("So you're the new nurse. I'm Annie Wilkes, head nurse, and I expect things to be spotless.", "It's a pleasure to meet you. I'm eager to learn everything I can from you.", 'お会いできてうれしいです。あなたから学べることは、すべて学びたいと思っています。',
+        [['お会いできてうれしいです', "It's a pleasure to meet you"], ['学びたいと思っています', "I'm eager to learn"], ['あなたから学べることはすべて', 'everything I can from you']]),
+      L('Rule number one: foul language is strictly forbidden on my ward. Without exception.', "Understood. I'll make a point of watching my language.", 'わかりました。言葉づかいには、しっかり気をつけます。',
+        [['しっかり心がけます', "I'll make a point of"], ['言葉づかいに気をつけること', 'watching my language']]),
+      L('Watch yourself around her. Last winter, three patients on her shift died within a single week.', 'It could have been sheer coincidence, but did anyone ever look into it properly?', 'ただの偶然だったのかもしれないけど、誰かちゃんと調べたの？',
+        [['ただの偶然だったのかもしれない', 'It could have been sheer coincidence'], ['誰か調べたの', 'did anyone ever look into it'], ['ちゃんと調べる', 'look into it properly']]),
+      L("Oh, this old thing? It's merely my scrapbook. Every memory I treasure is kept in here.", "Would you be willing to show me the sort of memories you've preserved in it?", 'そこにしまってある思い出を、見せていただけませんか。',
+        [['見せていただけませんか', 'Would you be willing to show me'], ['どんな思い出', 'the sort of memories'], ['そこにしまってある思い出', "the sort of memories you've preserved in it"]])
+    ],
+    narr: [
+      N('一九八一年の冬。あなたは新人看護師として、初めて病棟の扉を開けた。',
+        'In the winter of 1981, you opened the ward door for the first time as a new nurse.',
+        [['一九八一年の冬', 'In the winter of 1981'], ['あなたは病棟の扉を開けた', 'you opened the ward door'], ['新人看護師として初めて', 'for the first time as a new nurse']]),
+      N('アニーは、にこりともせずに、あなたの顔をじっと見つめた。',
+        'Annie stared at your face without the faintest hint of a smile.',
+        [['アニーはあなたの顔を見つめた', 'Annie stared at your face'], ['にこりともせずに', 'without the faintest hint of a smile']]),
+      N('夜勤の休憩室で、同僚のマージが声をひそめた。',
+        'In the night-shift break room, your coworker Marge lowered her voice.',
+        [['夜勤の休憩室で', 'In the night-shift break room'], ['同僚のマージ', 'your coworker Marge'], ['(マージは)声をひそめた', 'She lowered her voice']]),
+      N('真夜中、アニーがひとりで、分厚いアルバムに新聞の切り抜きを貼っていた。',
+        'At midnight, Annie was alone, pasting newspaper clippings into a thick album.',
+        [['真夜中', 'At midnight'], ['アニーはひとりだった', 'Annie was alone'], ['(アニーは)分厚いアルバムに新聞の切り抜きを貼っていた', 'She was pasting newspaper clippings into a thick album']])
+    ]
+  }
+};
+var LEVEL_INFO = {
+  e3:  {short:'三級',  long:'英検3級レベル',  note:'短くやさしい英語で、会話の返しを練習します。'},
+  e2:  {short:'二級',  long:'英検2級レベル',  note:'高校卒業くらいの英語で、会話の返しを練習します。'},
+  p1:  {short:'準一級', long:'英検準1級レベル', note:'言い回しの豊かな英語で、会話の返しを練習します。'},
+  sup: {short:'語り',  long:'語り手版（準1級以上）', note:'会話の返しに加えて、地の文も英語で語ります。'}
+};
+var LEVEL_ORDER = ['e3', 'e2', 'p1', 'sup'];
+/* 章にレベル別の会話をつける（2級は本文そのまま） */
+function attachLevels(c){
+  var d = LEVELS[c.id]; if(!d) return;
+  function lv(list){
+    return c.exchanges.map(function(base, i){
+      var x = list[i];
+      var rja = x.rja || base.reply.ja;
+      return {speaker:base.speaker, ja:base.ja, before:base.before, en:x.en,
+        reply:{ja:rja, en:x.ren, items:x.items.map(function(p){ return {q:p[0], a:p[1]}; }).concat([{q:rja, a:x.ren, full:true}])}};
+    });
+  }
+  var e3 = lv(d.e3), p1 = lv(d.p1), sup = [];
+  p1.forEach(function(x, i){
+    var n = d.narr[i];
+    if(n) sup.push({narr:true, speaker:'語り', reply:{ja:n.ja, en:n.en,
+      items:n.items.map(function(p){ return {q:p[0], a:p[1]}; }).concat([{q:n.ja, a:n.en, full:true}])}});
+    sup.push({speaker:x.speaker, ja:x.ja, en:x.en, reply:x.reply});
+  });
+  c.levels = {e3:e3, e2:c.exchanges, p1:p1, sup:sup};
+}
+
+var BUILTIN = [ST, KIRI, MISERY];
+BUILTIN.forEach(function(b){ b.chapters.forEach(attachLevels); });
+
+/* ================= 保存 ================= */
+var LS_KEY = 'kirigafuchi-v1';
+var userBooks = [], aiChapters = [], prog = {}, results = {}, curByBook = {}, level = 'e2', autoAudio = true, curBook = 'st', mode = 'keyboard', view = 'story';
+function lsGet(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); }catch(e){ return null; } }
+function lsSet(v){ try{ localStorage.setItem(LS_KEY, JSON.stringify(v)); }catch(e){} }
+function validChapter(c){ return c && typeof c.id === 'string' && Array.isArray(c.exchanges) && c.exchanges.length; }
+/* 記録は2か所に保存する。
+   ・このブラウザ（すぐ読める。ただしブラウザによっては閉じると消える）
+   ・Claudeアカウント（db の自分専用の場所。ブラウザを閉じても、別の端末でも残る） */
+var savedAt = 0;
+function snapshotState(){ return {userBooks:userBooks, aiChapters:aiChapters, prog:prog, results:results, curByBook:curByBook, curBook:curBook, mode:mode, level:level, autoAudio:autoAudio, savedAt:savedAt}; }
+function save(){ savedAt = Date.now(); var s = snapshotState(); lsSet(s); cloudSave(); }
+function applyState(s){
+  if(!s) return;
+  if(typeof s.savedAt === 'number') savedAt = s.savedAt;
+  if(Array.isArray(s.userBooks)) userBooks = s.userBooks.filter(function(b){ return b && b.id && b.world && Array.isArray(b.chapters) && b.chapters.every(validChapter); });
+  if(Array.isArray(s.aiChapters)) aiChapters = s.aiChapters.filter(validChapter).map(function(c){ if(!c.bookId) c.bookId = 'kiri'; return c; });
+  if(s.prog && typeof s.prog === 'object') prog = s.prog;
+  if(s.results && typeof s.results === 'object') results = s.results;
+  if(s.curByBook && typeof s.curByBook === 'object') curByBook = s.curByBook;
+  if(typeof s.cur === 'string' && !curByBook.kiri) curByBook.kiri = s.cur;   /* 以前の保存形式 */
+  if(typeof s.curBook === 'string') curBook = s.curBook;
+  if(s.mode === 'voice' || s.mode === 'tiles') mode = s.mode;
+  if(LEVEL_ORDER.indexOf(s.level) >= 0) level = s.level;
+  if(typeof s.autoAudio === 'boolean') autoAudio = s.autoAudio;
+}
+applyState(lsGet());
+
+/* ---------- Claudeアカウントへの保存 ---------- */
+var cloudRef = null, cloudBusy = false, cloudDirty = false, cloudTimer = null, cloudState = 'local';
+function cloudSave(){
+  if(!cloudRef) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(cloudFlush, 1200);   /* 続けて解いたときは、まとめて1回だけ書く */
+}
+async function cloudFlush(){
+  if(!cloudRef) return;
+  if(cloudBusy){ cloudDirty = true; return; }  /* 同じ場所への書き込みは1回ずつ */
+  cloudBusy = true; cloudDirty = false;
+  try{
+    await cloudRef.set(JSON.parse(JSON.stringify(snapshotState())));
+    cloudState = 'cloud';
+  }catch(e){
+    var code = e && e.code;
+    if(code === 'invalid_argument' || code === 'quota_exceeded' || code === 'revoked' || code === 'not_granted'){ cloudRef = null; cloudState = 'local-error'; }
+  }
+  cloudBusy = false;
+  if(cloudDirty) cloudFlush();
+  updateSaveNote();
+}
+async function cloudInit(){
+  try{
+    if(!window.claude || typeof window.claude.use !== 'function') return;
+    var db = await window.claude.use('db');
+    var user = await window.claude.use('user');
+    var uid = user ? await user.id() : null;
+    if(!db || !uid) return;
+    var ref = db.doc('data/users/' + uid + '/progress');
+    var snap = await ref.get();
+    cloudRef = ref;
+    var remote = snap.exists ? snap.data() : null;
+    if(remote && (remote.savedAt || 0) > savedAt){
+      /* Claude側の記録のほうが新しい：そちらで続きから */
+      applyState(JSON.parse(JSON.stringify(remote)));
+      lsSet(snapshotState());
+      cloudState = 'cloud';
+      if(view === 'story') render();
+    } else {
+      await cloudFlush();   /* このブラウザの記録のほうが新しい（または初めて）：Claude側へ書く */
+    }
+  }catch(e){ cloudRef = null; }
+  updateSaveNote();
+}
+function updateSaveNote(){
+  var el = $('saveNote'); if(!el) return;
+  el.textContent = cloudState === 'cloud'
+    ? '記録の保存先：Claudeアカウント（ブラウザを閉じても、別の端末でも続きから遊べます）'
+    : cloudState === 'local-error'
+    ? '記録の保存先：このブラウザのみ（Claudeアカウントへの保存に失敗しました）'
+    : '記録の保存先：このブラウザのみ（Claudeにログインして開くと、アカウントに保存されます）';
+}
+
+/* ================= 本と章 ================= */
+function books(){ return BUILTIN.concat(userBooks); }
+function book(){ var bs = books(); for(var i = 0; i < bs.length; i++){ if(bs[i].id === curBook) return bs[i]; } curBook = bs[0].id; return bs[0]; }
+function chapters(){ var b = book(); return b.chapters.concat(aiChapters.filter(function(c){ return c.bookId === b.id; })); }
+function curId(){ var cs = chapters(), id = curByBook[book().id]; for(var i = 0; i < cs.length; i++){ if(cs[i].id === id) return id; } return cs[0].id; }
+function chapter(){ var cs = chapters(), id = curId(); for(var i = 0; i < cs.length; i++){ if(cs[i].id === id) return cs[i]; } return cs[0]; }
+function setCur(id){ curByBook[book().id] = id; }
+function chIndex(id){ var cs = chapters(); for(var i = 0; i < cs.length; i++){ if(cs[i].id === id) return i; } return 0; }
+/* いまのレベルの会話（レベルのない章は共通） */
+/* 積み上げの区切り（インベーダーの区切り方にならう）
+   ・部品は3語以上の、意味のそろったかたまりにする（2語以下の小さな部品は出さない）
+   ・部品を言ったら、それまでの文につなげて言い直す段階は残す（部品 → 部品 → つなげる → 部品 → つなげる → 全文）
+   ・小さな部品を外して部品がなくなった長めの文は、いちばん大きい部品を1つ残す */
+function coarseItems(items){
+  var full = items[items.length - 1];
+  if(!full || !full.full) return items;
+  var fullKey = tokens(full.a).join(' '), fullN = tokens(full.a).length;
+  var all = items.slice(0, -1).map(function(it){ return {it:it, t:tokens(it.a)}; })
+    .filter(function(p){ return p.t.length && p.t.join(' ') !== fullKey; });
+  var parts = all.filter(function(p){ return p.t.length >= 3; });
+  if(!parts.length && fullN >= 6 && all.length){
+    parts = [all.slice().sort(function(x, y){ return y.t.length - x.t.length; })[0]];
+  }
+  return parts.map(function(p){ return p.it; }).concat([full]);
+}
+var coarseCache = new WeakMap();
+function exs(c){
+  var xs = (c.levels && c.levels[level]) || c.exchanges;
+  if(!coarseCache.has(xs)){
+    coarseCache.set(xs, xs.map(function(x){
+      return Object.assign({}, x, {reply:Object.assign({}, x.reply, {items:coarseItems(x.reply.items)})});
+    }));
+  }
+  return coarseCache.get(xs);
+}
+/* 進み具合はレベルごとに別。2級はこれまでの記録をそのまま使う */
+function pkey(c){ return (c.levels && level !== 'e2') ? c.id + '@' + level : c.id; }
+function P(){
+  var c = chapter(), k = pkey(c);
+  if(!prog[k]) prog[k] = {ex:0, it:0, done:false};
+  var p = prog[k];
+  if(!p.done){   /* 段階の数が変わっても、はみ出さないようにする */
+    var xs = exs(c);
+    if(p.ex >= xs.length) p.ex = xs.length - 1;
+    var n = xs[p.ex].reply.items.length;
+    if(p.it >= n) p.it = n - 1;
+  }
+  return p;
+}
+var KANJI = ['〇','一','二','三','四','五','六','七','八','九','十'];
+function chName(i){ var n = i + 1; return '第' + (n <= 10 ? KANJI[n] : (n < 20 ? '十' + KANJI[n-10] : String(n))) + '章'; }
+
+/* 本ごとの灯りの色 */
+function applyAccent(){
+  var hex = book().accent || '#E2A94B';
+  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  var root = document.documentElement.style;
+  root.setProperty('--lamp', hex);
+  root.setProperty('--lamp-soft', 'rgba(' + r + ',' + g + ',' + b + ',.14)');
+}
+
+/* ================= 文字の処理 ================= */
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function tokens(s){
+  return String(s).toLowerCase().replace(/[‘’ʼ`´]/g, "'").replace(/[—–]/g, ' ')
+    .replace(/[^a-z0-9'\s]/g, ' ').replace(/(^|\s)'+/g, ' ').replace(/'+(?=\s|$)/g, ' ')
+    .split(/\s+/).filter(Boolean);
+}
+function analyze(str){
+  var words = [], toks = [];
+  str.trim().split(/\s+/).filter(Boolean).forEach(function(w){
+    var t = tokens(w); words.push({w:w, s:toks.length, e:toks.length + t.length}); Array.prototype.push.apply(toks, t);
+  });
+  return {words:words, toks:toks};
+}
+function diffWords(u, a){
+  var n = u.length, m = a.length, i, j, dp = [];
+  for(i = 0; i <= n; i++) dp.push(new Array(m + 1).fill(0));
+  for(i = n - 1; i >= 0; i--) for(j = m - 1; j >= 0; j--) dp[i][j] = (u[i] === a[j]) ? dp[i+1][j+1] + 1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  var uMark = [], aMark = []; i = 0; j = 0;
+  while(i < n && j < m){
+    if(u[i] === a[j]){ uMark.push('ok'); aMark.push('ok'); i++; j++; }
+    else if(dp[i+1][j] >= dp[i][j+1]){ uMark.push('extra'); i++; }
+    else { aMark.push('miss'); j++; }
+  }
+  while(i < n){ uMark.push('extra'); i++; }
+  while(j < m){ aMark.push('miss'); j++; }
+  return {uMark:uMark, aMark:aMark, lcs:dp[0][0]};
+}
+function evaluate(user, ans){
+  var U = analyze(user), A = analyze(ans), d = diffWords(U.toks, A.toks);
+  var same = U.toks.length === A.toks.length && d.lcs === A.toks.length;
+  var ratio = d.lcs / Math.max(U.toks.length, A.toks.length, 1);
+  return {U:U, A:A, d:d, status: same ? 'correct' : (ratio >= 0.8 ? 'close' : 'wrong')};
+}
+function markedHTML(an, marks, cls){
+  return an.words.map(function(o){
+    var bad = false, any = false;
+    for(var k = o.s; k < o.e; k++){ any = true; if(marks[k] !== 'ok') bad = true; }
+    return '<span class="' + (any && bad ? cls : '') + '">' + esc(o.w) + '</span>';
+  }).join(' ');
+}
+function isContiguous(part, whole){
+  var p = tokens(part), w = tokens(whole);
+  if(!p.length || p.length > w.length) return false;
+  for(var i = 0; i + p.length <= w.length; i++){
+    var ok = true;
+    for(var k = 0; k < p.length; k++){ if(w[i+k] !== p[k]){ ok = false; break; } }
+    if(ok) return true;
+  }
+  return false;
+}
+/* 部品の先頭に主語などを1〜3語補った形か（残りは全文の連続した一部分） */
+function isCompleted(part, whole){
+  var p = tokens(part);
+  for(var k = 1; k <= 3; k++){
+    if(p.length - k < 2) break;
+    if(isContiguous(p.slice(k).join(' '), whole)) return true;
+  }
+  return false;
+}
+function shuffle(a){ a = a.slice(); for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  try{ window.speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.88; window.speechSynthesis.speak(u); }catch(e){}
+}
+
+/* ================= 画面 ================= */
+function renderShelf(){
+  var sel = $('bookSel'); sel.innerHTML = '';
+  books().forEach(function(b){ var o = document.createElement('option'); o.value = b.id; o.textContent = b.title; sel.appendChild(o); });
+  sel.value = book().id;
+  $('bookTitle').textContent = book().title;
+  var src = book().source;
+  $('bookSrc').hidden = !src; $('bookSrc').textContent = src || '';
+  $('newBookBtn').classList.toggle('cur', view === 'new');
+  var hasLv = chapters().some(function(c){ return c.levels; });
+  var rb = $('ribbons'); rb.innerHTML = ''; rb.hidden = !hasLv; $('levelNote').hidden = !hasLv;
+  if(hasLv){
+    LEVEL_ORDER.forEach(function(k){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'ribbon'; b.textContent = LEVEL_INFO[k].short;
+      b.title = LEVEL_INFO[k].long; b.setAttribute('aria-label', LEVEL_INFO[k].long);
+      b.setAttribute('aria-pressed', k === level ? 'true' : 'false');
+      b.addEventListener('click', function(){ if(level === k) return; stopListen(); level = k; save(); render(); });
+      rb.appendChild(b);
+    });
+    $('levelNote').textContent = LEVEL_INFO[level].long + '：' + LEVEL_INFO[level].note + (chapter().levels ? '' : '（この章はレベル共通です）');
+  }
+  $('audioBtn').setAttribute('aria-pressed', autoAudio ? 'true' : 'false');
+  $('audioBtn').textContent = autoAudio ? '音声 自動' : '音声 手動';
+  applyAccent();
+}
+function renderChapters(){
+  var nav = $('chapters'); nav.innerHTML = '';
+  var id = curId();
+  chapters().forEach(function(c, i){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip' + (prog[pkey(c)] && prog[pkey(c)].done ? ' done' : '') + (view === 'story' && c.id === id ? ' cur' : '');
+    b.textContent = chName(i); b.title = c.title;
+    b.addEventListener('click', function(){ stopListen(); setCur(c.id); view = 'story'; save(); render(); window.scrollTo(0, 0); });
+    nav.appendChild(b);
+  });
+  if(book().extras){
+    var ex = document.createElement('button');
+    ex.type = 'button'; ex.className = 'chip ui' + (view === 'extras' ? ' cur' : ''); ex.textContent = '付録';
+    ex.addEventListener('click', function(){ stopListen(); view = 'extras'; render(); window.scrollTo(0, 0); });
+    nav.appendChild(ex);
+  }
+  var bk = document.createElement('button');
+  bk.type = 'button'; bk.className = 'chip book' + (view === 'book' ? ' cur' : ''); bk.textContent = 'セリフ帳';
+  bk.addEventListener('click', function(){ stopListen(); view = 'book'; render(); window.scrollTo(0, 0); });
+  nav.appendChild(bk);
+}
+function pageHTML(title, paras){
+  return (title ? '<p class="ch-title">' + esc(title) + '</p>' : '') + paras.map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('');
+}
+function sayEl(who, en, ja, me){
+  var li = document.createElement('li');
+  li.className = 'say' + (me ? ' me' : '');
+  li.innerHTML =
+    '<div class="who"><b>' + esc(who) + '</b></div>' +
+    '<p class="line-en">' + esc(en) + '</p>' +
+    '<p class="line-ja" hidden>' + esc(ja) + '</p>' +
+    '<div class="acts"><button type="button" class="tiny" data-act="play">聞く</button><button type="button" class="tiny" data-act="ja">訳を見る</button></div>';
+  li.querySelector('[data-act="play"]').addEventListener('click', function(){ speak(en); });
+  var jaEl = li.querySelector('.line-ja'), tb = li.querySelector('[data-act="ja"]');
+  tb.addEventListener('click', function(){ jaEl.hidden = !jaEl.hidden; tb.textContent = jaEl.hidden ? '訳を見る' : '訳を隠す'; });
+  return li;
+}
+function render(){
+  renderShelf();
+  renderChapters();
+  $('storyView').hidden = view !== 'story';
+  $('bookView').hidden = view !== 'book';
+  $('newView').hidden = view !== 'new';
+  if(view === 'extras' && !book().extras) view = 'story';
+  $('extrasView').hidden = view !== 'extras';
+  $('storyView').hidden = view !== 'story';
+  $('chapters').hidden = view === 'new';
+  if(view === 'book'){ renderBook(); return; }
+  if(view === 'extras'){ renderExtras(); return; }
+  if(view === 'new'){ return; }
+  var c = chapter(), p = P(), i = chIndex(c.id);
+  $('narr').innerHTML = pageHTML(chName(i) + '　' + c.title, c.narration);
+  var log = $('log'); log.innerHTML = '';
+  var xs = exs(c);
+  var lastEx = p.done ? xs.length - 1 : p.ex;
+  for(var e = 0; e <= lastEx; e++){
+    var x = xs[e], doneX = e < lastEx || p.done;
+    if(x.narr){ if(doneX) log.appendChild(sayEl('あなた（語り）', x.reply.en, x.reply.ja, true)); continue; }
+    if(x.before){
+      var nb = document.createElement('li');
+      nb.className = 'narr-line';
+      nb.textContent = x.before;
+      log.appendChild(nb);
+    }
+    log.appendChild(sayEl(x.speaker, x.en, x.ja, false));
+    if(doneX) log.appendChild(sayEl('あなた', x.reply.en, x.reply.ja, true));
+  }
+  $('practice').hidden = p.done;
+  $('endArea').hidden = !p.done;
+  if(p.done) renderEnd(); else renderItem();
+}
+function curItem(){ var c = chapter(), p = P(); return exs(c)[p.ex].reply.items[p.it]; }
+function key(){ var p = P(); return pkey(chapter()) + '-' + p.ex + '-' + p.it; }
+
+/* ================= 練習 ================= */
+var hintN = 0, judged = null, tilesAns = [], tilesPool = [];
+function renderItem(){
+  var c = chapter(), p = P(), xs = exs(c), items = xs[p.ex].reply.items, it = items[p.it];
+  var full = xs[p.ex].reply.en;
+  $('replyTitle').textContent = xs[p.ex].narr ? 'あなたの語り' : 'あなたの返し';
+  $('count').textContent = '場面 ' + (p.ex + 1) + ' / ' + xs.length + '　・　' + (p.it + 1) + ' / ' + items.length;
+  var pct = it.full ? 100 : Math.round(Math.min(1, tokens(it.a).length / Math.max(tokens(full).length, 1)) * 100);
+  $('meterFill').style.width = pct + '%';
+  $('qtext').innerHTML = (it.full ? '<span class="full">全文</span>' : '') + esc(it.q);
+  hintN = 0; judged = null;
+  $('ans').value = ''; setNote('');
+  $('inputArea').hidden = false; $('resultArea').hidden = true;
+  setupTiles(it);
+  applyMode();
+}
+function applyMode(){
+  document.querySelectorAll('.modes button').forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-mode') === mode ? 'true' : 'false'); });
+  $('typeArea').hidden = mode === 'tiles';
+  $('tileArea').hidden = mode !== 'tiles';
+  $('micRow').hidden = mode !== 'voice';
+  $('ans').placeholder = mode === 'voice' ? '話した英語がここに入ります' : '英語で入力';
+  updateMic();
+}
+function setNote(t, err){ var n = $('note'); n.textContent = t || ''; n.className = 'note' + (err ? ' err' : ''); }
+/* 並べ替え：答えを1〜3語ずつのかたまりに分けて混ぜる */
+function setupTiles(it){
+  var words = it.a.split(/\s+/).filter(Boolean);
+  var size = words.length <= 4 ? 1 : (words.length <= 9 ? 2 : 3);
+  var chunks = [];
+  for(var i = 0; i < words.length; i += size) chunks.push(words.slice(i, i + size).join(' '));
+  tilesPool = shuffle(chunks.map(function(t, k){ return {id:k, t:t}; }));
+  if(tilesPool.length > 1 && tilesPool.every(function(x, k){ return x.id === k; })) tilesPool.reverse();
+  tilesAns = [];
+  drawTiles();
+}
+function drawTiles(){
+  var a = $('tilesAns'), p = $('tilesPool'); a.innerHTML = ''; p.innerHTML = '';
+  tilesAns.forEach(function(x, k){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'tile'; b.textContent = x.t;
+    b.addEventListener('click', function(){ tilesAns.splice(k, 1); tilesPool.push(x); drawTiles(); });
+    a.appendChild(b);
+  });
+  tilesPool.forEach(function(x, k){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'tile'; b.textContent = x.t;
+    b.addEventListener('click', function(){ tilesPool.splice(k, 1); tilesAns.push(x); drawTiles(); });
+    p.appendChild(b);
+  });
+}
+function userAnswer(){ return mode === 'tiles' ? tilesAns.map(function(x){ return x.t; }).join(' ') : $('ans').value.trim(); }
+function judge(){
+  if(judged) return;
+  var u = userAnswer();
+  if(!u){ setNote(mode === 'tiles' ? 'かたまりをタップして、文を組み立ててください。' : '英語を入力するか、話してください。', true); return; }
+  stopListen();
+  var ev = evaluate(u, curItem().a);
+  judged = {status:ev.status, user:u};
+  results[key()] = ev.status; save();
+  showResult();
+}
+function skip(){
+  if(judged) return;
+  stopListen();
+  judged = {status:'skipped', user:''};
+  results[key()] = 'skipped'; save();
+  showResult();
+}
+function showResult(){
+  var it = curItem(), r = judged;
+  $('inputArea').hidden = true; $('resultArea').hidden = false;
+  var labels = {correct:'正解', close:'おしい。あと少し', wrong:'もう一歩', skipped:'お手本'};
+  $('badge').textContent = labels[r.status]; $('badge').className = 'badge b-' + r.status;
+  if(r.status === 'skipped'){ $('userRow').hidden = true; $('modelLine').textContent = it.a; }
+  else{
+    var ev = evaluate(r.user, it.a);
+    $('userRow').hidden = false;
+    $('userLine').innerHTML = markedHTML(ev.U, ev.d.uMark, 'w-extra');
+    $('modelLine').innerHTML = markedHTML(ev.A, ev.d.aMark, 'w-miss');
+  }
+  var c = chapter(), p = P(), xs = exs(c), items = xs[p.ex].reply.items;
+  $('nextBtn').textContent = p.it < items.length - 1 ? '次のかたまりへ' : (p.ex < xs.length - 1 ? '物語を進める' : 'この章を終える');
+  if(it.full && r.status !== 'skipped' && autoAudio) speak(it.a);
+}
+function next(){
+  var c = chapter(), p = P(), xs = exs(c), items = xs[p.ex].reply.items;
+  if(p.it < items.length - 1){ p.it++; }
+  else if(p.ex < xs.length - 1){ p.ex++; p.it = 0; }
+  else { p.done = true; }
+  save(); render();
+  if(!p.done){
+    var x = xs[p.ex];
+    if(p.it === 0 && autoAudio && !x.narr) setTimeout(function(){ speak(x.en); }, 250);
+    $('practice').scrollIntoView({block:'nearest'});
+  } else { $('outro').scrollIntoView({block:'start'}); }
+}
+function retry(){ judged = null; renderItem(); }
+function hint(){
+  hintN++;
+  var w = curItem().a.split(/\s+/), n = Math.min(w.length, hintN * 2);
+  setNote('ヒント：' + w.slice(0, n).join(' ') + (n < w.length ? ' …' : ''));
+}
+
+/* ================= 章の終わり ================= */
+function renderEnd(){
+  var c = chapter(), i = chIndex(c.id), n = 0, ok = 0;
+  $('outro').innerHTML = pageHTML('', c.outro);
+  var pk = pkey(c);
+  exs(c).forEach(function(x, e){ x.reply.items.forEach(function(it, k){ n++; if(results[pk + '-' + e + '-' + k] === 'correct') ok++; }); });
+  $('endTitle').textContent = chName(i) + '「' + c.title + '」 おわり';
+  $('endScore').textContent = '正解したかたまり：' + ok + ' / ' + n;
+  var q = c.quote;
+  $('quoteBox').hidden = !q;
+  if(q){ $('quoteLabel').textContent = q.label || '原作の一節'; $('quoteJa').textContent = '「' + q.ja + '」'; $('quoteEn').textContent = q.en; }
+  var hasNext = i < chapters().length - 1;
+  $('nextChBtn').hidden = !hasNext;
+  $('aiBox').hidden = hasNext;
+  $('srcMoreBox').hidden = !book().source;
+  $('genMsg').textContent = ''; $('genMsg').className = 'note';
+  $('copyBox').hidden = true;
+}
+function replay(){ prog[pkey(chapter())] = {ex:0, it:0, done:false}; save(); render(); window.scrollTo(0, 0); }
+function nextChapter(){
+  var cs = chapters(), i = chIndex(curId());
+  if(i < cs.length - 1){ setCur(cs[i + 1].id); save(); render(); window.scrollTo(0, 0); }
+}
+
+/* ================= GitHub版の形式でコピー ================= */
+function chapterLines(c){
+  var lines = ['# ' + book().title + ' ' + chName(chIndex(c.id)) + '「' + c.title + '」' + (c.levels ? '（' + LEVEL_INFO[level].short + '）' : '')];
+  exs(c).forEach(function(x){ x.reply.items.forEach(function(it){ lines.push((it.full ? '★' : '') + it.q + '｜' + it.a); }); });
+  return lines.join('\n');
+}
+function copyText(text, where){
+  var pre = where === 'book' ? 'bookCopy' : 'copy';
+  var box = $(pre + 'Box'), ta = $(pre + 'Text'), msg = $(pre + 'Msg');
+  ta.value = text; box.hidden = false;
+  function fallback(){ ta.focus(); ta.select(); try{ ta.setSelectionRange(0, ta.value.length); }catch(e){} msg.textContent = '自動でコピーできませんでした。下の文字を長押しして全部選び、コピーしてください。'; }
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ msg.textContent = 'コピーしました。英作文スピーキングのGitHub版で「手入力で追加」に貼り付けると、この章の返しを練習できます。'; }, fallback);
+    } else fallback();
+  }catch(e){ fallback(); }
+}
+
+/* ================= AI：共通 ================= */
+var ITEM_RULES = [
+  '  - "reply.items"：返しの積み上げ練習。',
+  '    1. "reply.en" を節や句の境目で、意味のそろった「かたまり」（3〜8語）に切る。2語以下の小さなかたまりは作らない。',
+  '    2. 部品を1つ出したら、それまでの部品とつなげた問題を出す（部品 → 部品 → つなげる → 部品 → つなげる → 全文）。英語が10語以下なら部品1〜2個で全文へ。全文を含めて2〜6個。',
+  '    3. すべての "a" は、"reply.en" の中の連続した一部分と、単語の並びが完全に同じ（大文字小文字と末尾の句読点だけは違ってよい）。',
+  '       例外：つなげる前の「部品」が動詞や助動詞から始まり、主語がなくて一文として言えないときだけ、先頭に主語（必要ならbe動詞・助動詞も）を1〜3語補って一文にする。and / but で始まり主語がないときは、and / but を外して主語を補う。残りは "reply.en" の語の並びのまま。例："is going to treat us" → "They are going to treat us"。so that / because / if / when / to不定詞 / 前置詞句で始まるかたまりや名詞句は補わない。「つなげる」問題と全文には何も補わない。補った部品の "q" には「(彼らは)」のように括弧で主語を添える。',
+  '    4. "q" は "a" に対応する日本語で、"reply.ja" の言葉をできるだけそのまま使う。英語を混ぜない。',
+  '    5. 最後の要素は {"q": reply.ja と同じ, "a": reply.en と同じ, "full": true}。ほかには full を付けない。'
+];
+var CHAPTER_RULES = [
+  '- 謎と不気味さは雰囲気で描き、残酷な描写はしない。',
+  '- "title"：章題（日本語、10文字以内）。',
+  '- "narration"：章の冒頭の地の文（読みやすい現代の日本語）。2〜4段落の配列、合計120〜220字。',
+  '- "outro"：章の終わりの地の文。次の章が気になる引きで終える。2〜3段落の配列、合計80〜150字。',
+  '- "exchanges"：3〜4個。それぞれ：',
+  '  - "speaker"：話しかける登場人物の名前。',
+  '  - "en"：その人物の英語のセリフ。1〜2文、20語以内、中学〜高校で習う語彙。"ja" はその自然な和訳。',
+  '  - "reply"：主人公（学習者）の返し。"ja" は自然な日本語1文、"en" はその英語で8〜16語、自然で声に出して言いやすい文。'
+].concat(ITEM_RULES);
+var CHAPTER_SHAPE = '{"title":"...","narration":["..."],"exchanges":[{"speaker":"...","en":"...","ja":"...","reply":{"ja":"...","en":"...","items":[{"q":"...","a":"..."},{"q":"...","a":"...","full":true}]}}],"outro":["..."]}';
+function worldLines(b){
+  var w = b.world;
+  return [
+    '作品名：' + b.title + (b.source ? '（' + b.source + '）' : ''),
+    '舞台：' + w.place,
+    '主人公（学習者）：' + w.you,
+    '登場人物：' + (w.cast || []).map(function(p){ return p.name + '（' + p.role + '）'; }).join('、'),
+    '雰囲気：' + w.tone
+  ];
+}
+function compactChapter(c){
+  return {title:c.title, narration:c.narration, exchanges:c.exchanges.map(function(x){
+    return {speaker:x.speaker, en:x.en, ja:x.ja, reply:{ja:x.reply.ja, en:x.reply.en, items:x.reply.items}};
+  }), outro:c.outro};
+}
+function strArr(v){
+  if(typeof v === 'string') return v.split(/\n+/).map(function(s){ return s.trim(); }).filter(Boolean);
+  if(Array.isArray(v)) return v.map(function(s){ return String(s).trim(); }).filter(Boolean);
+  return [];
+}
+function tidyChapter(d, id){
+  if(!d || !Array.isArray(d.exchanges)) throw new Error('AIの出力を読み取れませんでした。もう一度お試しください。');
+  var ex = [];
+  d.exchanges.forEach(function(x){
+    if(!x || !x.reply) return;
+    var sp = String(x.speaker || '').trim(), en = String(x.en || '').trim(), ja = String(x.ja || '').trim();
+    var rja = String(x.reply.ja || '').trim(), ren = String(x.reply.en || '').trim();
+    if(!sp || !en || !rja || !ren) return;
+    var items = [], seen = {}, fullKey = tokens(ren).join(' ');
+    (Array.isArray(x.reply.items) ? x.reply.items : []).forEach(function(it){
+      if(!it || typeof it.q !== 'string' || typeof it.a !== 'string') return;
+      var q = it.q.trim(), a = it.a.trim(), k = tokens(a).join(' ');
+      if(!q || !a || seen[k] || k === fullKey) return;
+      if(!isContiguous(a, ren) && !isCompleted(a, ren)) return;   /* 全文とずれたかたまりは使わない（主語を補った部品はよい） */
+      seen[k] = true; items.push({q:q, a:a});
+    });
+    items.push({q:rja, a:ren, full:true});
+    ex.push({speaker:sp, en:en, ja:ja, reply:{ja:rja, en:ren, items:items}});
+  });
+  if(!ex.length) throw new Error('AIの出力に会話が含まれていませんでした。もう一度お試しください。');
+  return {
+    id: id,
+    title: String(d.title || '続き').trim().slice(0, 20),
+    narration: strArr(d.narration).length ? strArr(d.narration) : ['……'],
+    outro: strArr(d.outro).length ? strArr(d.outro) : ['……'],
+    exchanges: ex
+  };
+}
+async function getSample(msgEl){
+  if(!window.claude || typeof window.claude.use !== 'function'){ msgEl.textContent = 'この機能は、Claudeで公開したページから開いたときだけ使えます。'; msgEl.className = 'note err'; return null; }
+  var s = null;
+  try{ s = await window.claude.use('sample'); }catch(e){ s = null; }
+  if(!s){ msgEl.textContent = 'この端末・アカウントではAI機能が使えないようです。'; msgEl.className = 'note err'; }
+  return s;
+}
+function aiError(e){
+  var code = e && e.code;
+  return code === 'rate_limited' ? 'リクエストが混み合っています。少し時間をおいてからお試しください。'
+    : (code === 'not_granted' || code === 'sampling_disabled') ? 'この端末・アカウントではAI機能が許可されていないようです。'
+    : (e && e.message) ? e.message : 'うまく作れませんでした。もう一度お試しください。';
+}
+
+/* ================= AI：次の章 ================= */
+function buildNextPrompt(wish, srcMore){
+  var b = book(), cs = chapters();
+  var story = cs.map(function(c, i){ return chName(i) + '「' + c.title + '」の終わり：' + c.outro.join(''); }).join('\n');
+  var rules = b.fanwork
+    ? ['- 個人で楽しむための創作。もとの作品の人物と設定は使ってよいが、もとの作品のセリフ・文章・場面は書き写さず、すべて新しい場面とセリフを書く。',
+       '- 暴力・死・事件は直接描写しない。新聞の切り抜き、うわさ、気配、会話の違和感で怖さを出す。',
+       '- 新しい登場人物は1章に1人まで。これまでの人物を中心に話を進める。']
+    : b.source
+    ? ['- 原作の人物・舞台・設定を使ってよい（著作権の切れた作品）。原作の展開をなぞっても、少し変えてもよい。',
+       '- 原作の文章を長く写さず、場面を要約して地の文にする。']
+    : ['- 人物・地名・出来事はすべてオリジナルにする。実在の小説・映画・ドラマの人物名、作品名、有名な場面やセリフは使わない。',
+       '- 新しい登場人物は1章に1人まで。これまでの人物を中心に話を進める。'];
+  return [
+    'あなたは、英会話の学習に使う連続物語の作者です。学習者は主人公として物語に参加します。登場人物は英語で話しかけ、学習者は自分の返しを、意味のかたまりごとに積み上げて英語で言う練習をします。',
+    '', '## 世界観'].concat(worldLines(b), [
+    '', '## これまでのあらすじ', story
+  ], b.extras ? ['', '## 付録：' + b.extras.title + '（物語の中に実在する資料。展開の希望で番号を指定されたら、その中身を物語に生かす）'].concat(
+    b.extras.items.map(function(it, k){
+      return '切り抜き' + (k + 1) + '（' + it.date + '、' + it.paper + '）「' + it.head + '」' + it.en + (it.margin ? '　余白の書き込み：' + it.margin.en : '');
+    })) : [], [
+    '', '## 直前の章（書き方の手本）', JSON.stringify(compactChapter(cs[cs.length - 1])),
+    '', '## 書いてほしいもの', '直前の章の続きとなる、次の1章。' + (wish ? '\n展開の希望：' + wish : '')
+  ], srcMore ? ['', '## 原作の続きの場面（この場面をもとに章を書く）', srcMore] : [], [
+    '', '## 条件'], rules, CHAPTER_RULES, [
+    '', '## 出力形式', 'JSONだけを出力する（説明やコードフェンスは付けない）。', CHAPTER_SHAPE
+  ]).join('\n');
+}
+var busy = false;
+async function generateNext(){
+  if(busy) return;
+  var msg = $('genMsg'), btn = $('genBtn');
+  msg.className = 'note';
+  var sample = await getSample(msg); if(!sample) return;
+  busy = true; btn.disabled = true; btn.textContent = '執筆中';
+  msg.textContent = '次の章を書いています。30〜60秒ほどかかります。';
+  try{
+    var srcMore = book().source ? $('srcMore').value.trim().slice(0, 8000) : '';
+    var d = await sample.json(buildNextPrompt($('wish').value.trim(), srcMore), {modelTier:'complex', cache:false});
+    var ch = tidyChapter(d, 'ai-' + Date.now().toString(36));
+    ch.bookId = book().id;
+    aiChapters.push(ch);
+    setCur(ch.id); $('wish').value = ''; $('srcMore').value = '';
+    save(); render(); window.scrollTo(0, 0);
+    if(autoAudio) setTimeout(function(){ speak(ch.exchanges[0].en); }, 400);
+  }catch(e){ msg.textContent = aiError(e); msg.className = 'note err'; }
+  busy = false; btn.disabled = false; btn.textContent = 'AIで次の章を書く';
+}
+
+/* ================= AI：原作から新しい本 ================= */
+function buildNewPrompt(title, author, role, text){
+  return [
+    'あなたは、英会話の学習に使う連続物語の作者です。学習者は主人公として物語に参加します。登場人物は英語で話しかけ、学習者は自分の返しを、意味のかたまりごとに積み上げて英語で言う練習をします。',
+    '著作権の切れた作品の場面をもとに、この物語の世界観と第一章を作ってください。',
+    '',
+    '## 原作', '作品名：' + title + (author ? '　作者：' + author : ''),
+    '主人公（学習者）の役：' + (role || '原作の場面に自然に入れる役を、あなたが決める（原作の語り手や、主人公の仲間など）'),
+    '',
+    '## 原作の場面', text,
+    '',
+    '## 作ってほしいもの',
+    '1. "world"：{"place":"舞台（時代と場所）","you":"主人公（学習者）の役","cast":[{"name":"原作の人物名","role":"どんな人物か"}],"tone":"雰囲気と語り口"}。cast は3〜5人。',
+    '2. "chapter"：原作の場面をもとにした第一章。',
+    '',
+    '## 条件',
+    '- 原作の人物・舞台・設定を使う。原作の文章を長く写さず、場面を要約して地の文にする。',
+    '- 地の文は原作の雰囲気に合わせる（少年向けの作品なら、です・ます調など）。'
+  ].concat(CHAPTER_RULES, [
+    '',
+    '## 章の手本（形式の参考。内容はまねしない）',
+    JSON.stringify(compactChapter(ST.chapters[0])),
+    '',
+    '## 出力形式', 'JSONだけを出力する（説明やコードフェンスは付けない）。',
+    '{"world":{"place":"...","you":"...","cast":[{"name":"...","role":"..."}],"tone":"..."},"chapter":' + CHAPTER_SHAPE + '}'
+  ]).join('\n');
+}
+var ACCENTS = ['#E89A8C','#A7C77A','#C9A2E8','#7ED0C8','#E8C07A'];
+async function generateNewBook(){
+  if(busy) return;
+  var msg = $('nbMsg'), btn = $('nbGenBtn');
+  msg.className = 'note';
+  var title = $('nbTitle').value.trim(), author = $('nbAuthor').value.trim(), role = $('nbRole').value.trim(), text = $('nbText').value.trim();
+  if(!title){ msg.textContent = '作品名を入力してください。'; msg.className = 'note err'; return; }
+  if(text.length < 200){ msg.textContent = '場面の文章を貼ってください（200字以上）。'; msg.className = 'note err'; return; }
+  var sample = await getSample(msg); if(!sample) return;
+  busy = true; btn.disabled = true; btn.textContent = '作成中';
+  msg.textContent = '原作を読んで、第一章を作っています。30〜60秒ほどかかります。';
+  try{
+    var d = await sample.json(buildNewPrompt(title, author, role, text.slice(0, 12000)), {modelTier:'complex', cache:false});
+    if(!d || !d.world || !d.chapter) throw new Error('AIの出力を読み取れませんでした。もう一度お試しください。');
+    var w = d.world;
+    var bid = 'ub-' + Date.now().toString(36);
+    var ch = tidyChapter(d.chapter, bid + '-1');
+    var nb = {
+      id: bid,
+      title: title,
+      accent: ACCENTS[userBooks.length % ACCENTS.length],
+      source: (author ? author + '『' + title + '』' : '『' + title + '』') + 'をもとにした物語です。',
+      world: {
+        place: String(w.place || '').trim(),
+        you: String(w.you || role || '主人公').trim(),
+        cast: (Array.isArray(w.cast) ? w.cast : []).filter(function(p){ return p && p.name; }).map(function(p){ return {name:String(p.name), role:String(p.role || '')}; }),
+        tone: String(w.tone || '').trim()
+      },
+      chapters: [ch]
+    };
+    userBooks.push(nb);
+    curBook = nb.id; setCur(ch.id); view = 'story';
+    ['nbTitle','nbAuthor','nbRole','nbText'].forEach(function(id){ $(id).value = ''; });
+    $('nbCount').textContent = ''; msg.textContent = '';
+    save(); render(); window.scrollTo(0, 0);
+    if(autoAudio) setTimeout(function(){ speak(ch.exchanges[0].en); }, 400);
+  }catch(e){ msg.textContent = aiError(e); msg.className = 'note err'; }
+  busy = false; btn.disabled = false; btn.textContent = '第一章を作る';
+}
+
+/* ================= 付録 ================= */
+function renderExtras(){
+  var x = book().extras, body = $('extrasBody');
+  $('extrasTitle').textContent = x.title;
+  $('extrasNote').textContent = x.note || '';
+  body.innerHTML = '';
+  x.items.forEach(function(it){
+    var art = document.createElement('article'); art.className = 'clip';
+    var dl = document.createElement('div'); dl.className = 'dateline';
+    var p1 = document.createElement('span'); p1.textContent = it.paper;
+    var p2 = document.createElement('span'); p2.textContent = it.date;
+    dl.appendChild(p1); dl.appendChild(p2);
+    var h = document.createElement('h3'); h.textContent = it.head;
+    var bd = document.createElement('p'); bd.className = 'body'; bd.textContent = it.en;
+    var ja = document.createElement('p'); ja.className = 'ja'; ja.textContent = it.ja; ja.hidden = true;
+    var ul = document.createElement('ul'); ul.className = 'words'; ul.hidden = true;
+    (it.words || []).forEach(function(w){
+      var li = document.createElement('li');
+      var b = document.createElement('b'); b.textContent = w[0];
+      li.appendChild(b); li.appendChild(document.createTextNode('　' + w[1]));
+      ul.appendChild(li);
+    });
+    var acts = document.createElement('div'); acts.className = 'acts';
+    var play = document.createElement('button'); play.type = 'button'; play.className = 'tiny'; play.textContent = '聞く';
+    play.addEventListener('click', function(){ speak(it.head + '. ' + it.en); });
+    var tr = document.createElement('button'); tr.type = 'button'; tr.className = 'tiny'; tr.textContent = '訳と語句を見る';
+    tr.addEventListener('click', function(){ ja.hidden = !ja.hidden; ul.hidden = ja.hidden; tr.textContent = ja.hidden ? '訳と語句を見る' : '訳と語句を隠す'; });
+    acts.appendChild(play); acts.appendChild(tr);
+    art.appendChild(dl); art.appendChild(h); art.appendChild(bd); art.appendChild(acts); art.appendChild(ja); art.appendChild(ul);
+    if(it.margin){
+      var m = document.createElement('p'); m.className = 'margin-note';
+      m.textContent = it.margin.en;
+      var s = document.createElement('small'); s.textContent = it.margin.ja; m.appendChild(s);
+      art.appendChild(m);
+    }
+    body.appendChild(art);
+  });
+}
+
+/* ================= セリフ帳 ================= */
+function renderBook(){
+  var body = $('bookBody'); body.innerHTML = '';
+  var groups = {}, order = [], mine = [];
+  chapters().forEach(function(c){
+    var p = prog[pkey(c)]; if(!p) return;
+    var xs = exs(c);
+    var last = p.done ? xs.length - 1 : p.ex;
+    for(var e = 0; e <= last && e < xs.length; e++){
+      var x = xs[e];
+      if(!x.narr){
+        if(!groups[x.speaker]){ groups[x.speaker] = []; order.push(x.speaker); }
+        groups[x.speaker].push({en:x.en, ja:x.ja});
+      }
+      if(e < last || p.done) mine.push({en:x.reply.en, ja:x.reply.ja});
+    }
+  });
+  $('delBookBtn').hidden = BUILTIN.some(function(b){ return b.id === book().id; });
+  $('bookMsg').textContent = '';
+  /* 章ごとのコピー（まだ読んでいない章も、先に練習用にコピーできる） */
+  var cl = $('copyList'); cl.innerHTML = '';
+  $('bookCopyBox').hidden = true;
+  chapters().forEach(function(c, i){
+    var li = document.createElement('li');
+    li.className = 'row';
+    li.style.cssText = 'padding:8px 10px;background:var(--panel2);border-radius:var(--r);flex-wrap:nowrap';
+    var t = document.createElement('span');
+    t.style.cssText = 'min-width:0;overflow-wrap:anywhere;font-family:var(--mincho)';
+    var p = prog[pkey(c)];
+    t.textContent = chName(i) + '「' + c.title + '」' + (p && p.done ? '（済）' : '');
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = 'コピー';
+    b.addEventListener('click', function(){ copyText(chapterLines(c), 'book'); });
+    li.appendChild(t); li.appendChild(b); cl.appendChild(li);
+  });
+  if(!order.length){ body.innerHTML = '<p class="empty">まだ集めたセリフはありません。物語を進めると、登場人物のセリフとあなたの返しがここにたまっていきます。</p>'; return; }
+  function section(title, list){
+    var s = document.createElement('section');
+    var h = document.createElement('h3'); h.textContent = title + '（' + list.length + '）'; s.appendChild(h);
+    var ul = document.createElement('ul');
+    list.forEach(function(l){
+      var li = document.createElement('li');
+      var en = document.createElement('p'); en.className = 'line-en'; en.textContent = l.en;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'tiny'; b.textContent = '聞く';
+      b.addEventListener('click', function(){ speak(l.en); });
+      var ja = document.createElement('p'); ja.className = 'line-ja'; ja.textContent = l.ja;
+      li.appendChild(en); li.appendChild(b); li.appendChild(ja); ul.appendChild(li);
+    });
+    s.appendChild(ul); body.appendChild(s);
+  }
+  if(mine.length) section('あなた', mine);
+  order.forEach(function(n){ section(n, groups[n]); });
+}
+function confirmTap(btn, armedText, action){
+  var original = btn.textContent, armed = false, timer = null;
+  function disarm(){ armed = false; btn.textContent = original; btn.classList.remove('danger'); }
+  btn.addEventListener('click', function(){
+    if(!armed){ armed = true; btn.textContent = armedText; btn.classList.add('danger'); timer = setTimeout(disarm, 3500); return; }
+    clearTimeout(timer); disarm(); action();
+  });
+}
+
+/* ================= 音声入力 ================= */
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var rec = null, listening = false, base = '';
+var MIC_KEY = 'kirigafuchi-mic-blocked';
+var micBlocked = !SR;
+try{ if(localStorage.getItem(MIC_KEY) === '1') micBlocked = true; }catch(e){}
+var KB_NOTE = 'キーボードのマイク（音声入力）を押して、英語で話してください。英語のキーボードに切り替えてから話すと、英語で入力されます。';
+function setMicBlocked(){ micBlocked = true; try{ localStorage.setItem(MIC_KEY, '1'); }catch(e){} updateMic(); }
+function useKeyboardDictation(){ var ta = $('ans'); ta.focus(); try{ ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} setNote(KB_NOTE); }
+function updateMic(){
+  var b = $('micBtn');
+  b.classList.toggle('on', listening);
+  b.setAttribute('aria-pressed', listening ? 'true' : 'false');
+  $('micLabel').textContent = listening ? '聞いています。もう一度タップで止める'
+    : (micBlocked ? 'タップしてキーボードを開き、キーボードのマイクで話す' : 'タップして英語で話す');
+}
+function startListen(){
+  if(micBlocked){ useKeyboardDictation(); return; }
+  try{
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    rec = new SR(); rec.lang = 'en-US'; rec.interimResults = true; rec.continuous = false;
+    base = $('ans').value.trim(); base = base ? base + ' ' : '';
+    rec.onstart = function(){ listening = true; updateMic(); setNote(''); };
+    rec.onresult = function(e){ var t = ''; for(var i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; $('ans').value = base + t.trim(); };
+    rec.onerror = function(e){
+      if(e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture'){
+        setMicBlocked(); setNote('このページではマイクを直接使えません。もう一度マイクのボタンを押すとキーボードが開くので、' + KB_NOTE); return;
+      }
+      setNote(e.error === 'no-speech' ? '音声が聞き取れませんでした。もう一度話してください。' : '音声入力でエラーが起きました（' + e.error + '）。', true);
+    };
+    rec.onend = function(){ listening = false; updateMic(); };
+    rec.start();
+  }catch(err){ listening = false; setMicBlocked(); useKeyboardDictation(); }
+}
+function stopListen(){
+  if(rec){ rec.onresult = rec.onend = rec.onerror = rec.onstart = null; try{ rec.abort(); }catch(e){} rec = null; }
+  listening = false; updateMic();
+}
+function toggleMic(){ if(listening && rec){ try{ rec.stop(); }catch(e){} } else startListen(); }
+try{
+  if(navigator.permissions && navigator.permissions.query){
+    navigator.permissions.query({name:'microphone'}).then(function(st){ if(st && st.state === 'denied') setMicBlocked(); }).catch(function(){});
+  }
+}catch(e){}
+
+/* ================= イベント ================= */
+$('bookSel').addEventListener('change', function(e){ stopListen(); curBook = e.target.value; view = 'story'; save(); render(); window.scrollTo(0, 0); });
+$('newBookBtn').addEventListener('click', function(){ stopListen(); view = view === 'new' ? 'story' : 'new'; render(); window.scrollTo(0, 0); });
+$('nbCancel').addEventListener('click', function(){ view = 'story'; render(); window.scrollTo(0, 0); });
+$('nbText').addEventListener('input', function(){ var n = $('nbText').value.length; $('nbCount').textContent = n ? n.toLocaleString() + '字' + (n > 12000 ? '（長すぎるため、最初の12,000字だけを使います）' : '') : ''; });
+$('nbGenBtn').addEventListener('click', generateNewBook);
+document.querySelectorAll('.modes button').forEach(function(b){
+  b.addEventListener('click', function(){ stopListen(); mode = b.getAttribute('data-mode'); save(); applyMode(); setNote(''); });
+});
+$('judgeBtn').addEventListener('click', judge);
+$('skipBtn').addEventListener('click', skip);
+$('hintBtn').addEventListener('click', hint);
+$('clearBtn').addEventListener('click', function(){ $('ans').value = ''; setupTiles(curItem()); setNote(''); });
+$('micBtn').addEventListener('click', toggleMic);
+$('speakBtn').addEventListener('click', function(){ speak(curItem().a); });
+$('retryBtn').addEventListener('click', retry);
+$('nextBtn').addEventListener('click', next);
+$('nextChBtn').addEventListener('click', nextChapter);
+$('replayBtn').addEventListener('click', replay);
+$('audioBtn').addEventListener('click', function(){ autoAudio = !autoAudio; if(!autoAudio && window.speechSynthesis){ try{ window.speechSynthesis.cancel(); }catch(e){} } save(); renderShelf(); });
+$('quotePlay').addEventListener('click', function(){ var q = chapter().quote; if(q) speak(q.en); });
+$('genBtn').addEventListener('click', generateNext);
+$('copyChBtn').addEventListener('click', function(){ copyText(chapterLines(chapter())); });
+confirmTap($('resetProgBtn'), 'もう一度タップでリセット', function(){
+  chapters().forEach(function(c){
+    Object.keys(prog).forEach(function(k){ if(k === c.id || k.indexOf(c.id + '@') === 0) delete prog[k]; });
+    Object.keys(results).forEach(function(k){ if(k.indexOf(c.id + '-') === 0 || k.indexOf(c.id + '@') === 0) delete results[k]; });
+  });
+  setCur(chapters()[0].id); save(); render(); $('bookMsg').textContent = 'この本の進み具合をリセットしました。';
+});
+confirmTap($('delAiBtn'), 'もう一度タップで消す', function(){
+  var bid = book().id;
+  aiChapters = aiChapters.filter(function(c){ if(c.bookId === bid){ delete prog[c.id]; return false; } return true; });
+  setCur(chapters()[0].id); save(); render(); $('bookMsg').textContent = 'AIで書いた章を消しました。';
+});
+confirmTap($('delBookBtn'), 'もう一度タップで消す', function(){
+  var bid = book().id;
+  userBooks = userBooks.filter(function(b){ return b.id !== bid; });
+  aiChapters = aiChapters.filter(function(c){ return c.bookId !== bid; });
+  delete curByBook[bid];
+  curBook = BUILTIN[0].id; view = 'story'; save(); render();
+});
+
+/* ================= 起動 ================= */
+render();
+updateSaveNote();
+cloudInit();
+})();
+</script>
+
+</body></html>
